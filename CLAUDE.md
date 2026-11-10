@@ -29,3 +29,6 @@ Rubric is a hiring platform for a private K-12 school that enforces the
 - Every state change will be written to an audit log (built later).
 - Keep code simple and readable; no extra frameworks or libraries beyond
   those listed above.
+- Hiring history is never hard-deleted: `Application -> RoleOpening` and
+  `Application -> Candidate` are `ON DELETE RESTRICT`. Deleting an opening or
+  a candidate that has applications must fail, not cascade.

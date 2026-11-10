@@ -10,8 +10,8 @@ class Application(TimestampMixin, Base):
     __tablename__ = "applications"
     __table_args__ = (UniqueConstraint("candidate_id", "opening_id"),)
 
-    candidate_id: Mapped[int] = mapped_column(ForeignKey("candidates.id"))
-    opening_id: Mapped[int] = mapped_column(ForeignKey("role_openings.id"))
+    candidate_id: Mapped[int] = mapped_column(ForeignKey("candidates.id", ondelete="RESTRICT"))
+    opening_id: Mapped[int] = mapped_column(ForeignKey("role_openings.id", ondelete="RESTRICT"))
     stage: Mapped[ApplicationStage] = mapped_column(str_enum(ApplicationStage), default=ApplicationStage.sourced)
 
     candidate: Mapped["Candidate"] = relationship(back_populates="applications")

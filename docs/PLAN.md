@@ -3,20 +3,20 @@
 Re-read this file and CLAUDE.md whenever resuming work or recovering from lost context.
 
 ## Phase 0: Verify
-- [ ] `alembic current` shows initial migration applied on Neon
-- [ ] Top bar shows "Rubric" + tagline "Every hire, one standard"
+- [x] `alembic current` shows initial migration applied on Neon
+- [x] Top bar shows "Rubric" + tagline "Every hire, one standard"
 
 ## Phase 1: Schema fixes, rules engine, audit, tests
-- [ ] Migration "cascade and candidate email" (Scorecard->ScorecardItem CASCADE, RoleOpening->Scorecard CASCADE, Candidate.email unique)
-- [ ] CLAUDE.md rule: hiring history (Application->RoleOpening, Application->Candidate) is never hard-deleted (RESTRICT)
-- [ ] Candidate email validator (lowercase + strip) on the model
-- [ ] app/services/gates.py: GateResult dataclass + 6 forward gates + reject/withdraw rule
-- [ ] app/services/audit.py: log_event, append-only
-- [ ] app/services/workflow.py: advance_application, release_interviewer, approve_scorecard/assert_scorecard_editable, create_default_safeguarding_checks
-- [ ] app/services/visibility.py: can_view_ratings
-- [ ] DEFAULT_SAFEGUARDING_CHECKS in app/config.py
-- [ ] pytest tests for gates + workflow overrides (no DB)
-- [ ] Run full test suite, smoke test app, commit "Phase 1: ..."
+- [x] Migration "cascade and candidate email" (Scorecard->ScorecardItem CASCADE, RoleOpening->Scorecard CASCADE, Candidate.email unique)
+- [x] CLAUDE.md rule: hiring history (Application->RoleOpening, Application->Candidate) is never hard-deleted (RESTRICT)
+- [x] Candidate email validator (lowercase + strip) on the model
+- [x] app/services/gates.py: GateResult dataclass + 6 forward gates + reject/withdraw rule
+- [x] app/services/audit.py: log_event, append-only
+- [x] app/services/workflow.py: advance_application, release_interviewer, approve_scorecard/assert_scorecard_editable, create_default_safeguarding_checks
+- [x] app/services/visibility.py: can_view_ratings
+- [x] DEFAULT_SAFEGUARDING_CHECKS in app/config.py
+- [x] pytest tests for gates + workflow overrides (no DB)
+- [x] Run full test suite, smoke test app, commit "Phase 1: ..."
 
 ## Phase 2: Demo identity and permissions
 - [ ] Working role switcher (cookie rubric_user_id), get_current_user dependency (defaults to chairman)

@@ -15,3 +15,12 @@ class Settings(BaseSettings):
 
 
 settings = Settings()
+
+# Default safeguarding checklist created when an application enters the
+# references stage. Plain constant, not an env-configurable setting.
+DEFAULT_SAFEGUARDING_CHECKS = [
+    "Identity verification",
+    "Criminal record / police check",
+    "Previous employer verification",
+    "Safeguarding declaration signed",
+]

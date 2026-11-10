@@ -16,5 +16,5 @@ class RoleOpening(TimestampMixin, Base):
     hiring_manager_id: Mapped[int] = mapped_column(ForeignKey("users.id"))
 
     hiring_manager: Mapped["User"] = relationship(back_populates="openings_managed")
-    scorecard: Mapped["Scorecard | None"] = relationship(back_populates="opening")
+    scorecard: Mapped["Scorecard | None"] = relationship(back_populates="opening", cascade="all, delete-orphan")
     applications: Mapped[list["Application"]] = relationship(back_populates="opening")
