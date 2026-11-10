@@ -1,0 +1,41 @@
+{% set steps = [
+  ("sourced", "Scorecard", "The Who method starts with a Scorecard: a clear mission and outcomes agreed before anyone is sourced. Without one, interviewers end up grading candidates against different, unstated standards."),
+  ("screening", "Screening", "A short screening interview filters for the basics, motivation, trajectory and fit on logistics, before investing hours in deeper interviews."),
+  ("who_interview", "Who interview", "The Who interview walks chronologically through a candidate's career: what they were hired to do, what they are proud of, and why they left. It surfaces real patterns and tells you who to call for references."),
+  ("focused", "Focused", "Focused interviews, and a demo lesson for teaching roles, test specific scorecard competencies in depth, each graded with real evidence rather than gut feel."),
+  ("references", "References", "References from former managers, not just names the candidate hand-picks, are one of the best predictors of future performance. Safeguarding checks protect students and must clear before a decision."),
+  ("decision", "Decision", "The decision weighs evidence against the scorecard, not charisma or consensus. A written rationale makes the reasoning auditable later."),
+  ("offer", "Offer", "The offer is where you sell the role using Fit, Family, Freedom, Fortune and Fun, addressing what would actually make this candidate say yes."),
+] %}
+{% set stage_order = ["sourced", "screening", "who_interview", "focused", "references", "decision", "offer", "hired"] %}
+{% set current_index = stage_order.index(application.stage.value) if application.stage.value in stage_order else -1 %}
+
+<ol class="flex flex-wrap gap-2 mb-2">
+  {% for key, label, why in steps %}
+  {% set idx = stage_order.index(key) %}
+  <li class="flex-1 min-w-[100px]">
+    <div class="rounded-md border px-2 py-1.5 text-xs text-center
+      {% if application.stage.value in ('rejected', 'withdrawn') %}bg-gray-100 border-gray-200 text-gray-400
+      {% elif idx < current_index or application.stage.value == 'hired' %}bg-green-50 border-green-300 text-green-800
+      {% elif idx == current_index %}bg-blue-50 border-blue-400 text-blue-900 font-semibold
+      {% else %}bg-gray-50 border-gray-200 text-gray-400{% endif %}">
+      {{ label }}
+    </div>
+  </li>
+  {% endfor %}
+</ol>
+
+{% if application.stage.value == "hired" %}
+<p class="text-sm text-green-700 mb-4 font-medium">Hired.</p>
+{% elif application.stage.value in ("rejected", "withdrawn") %}
+<p class="text-sm text-red-700 mb-4">This application was {{ application.stage.value }}.</p>
+{% endif %}
+
+<details class="mb-6 text-sm text-gray-600">
+  <summary class="cursor-pointer select-none text-gray-500">Why this step?</summary>
+  <div class="mt-2 space-y-2">
+    {% for key, label, why in steps %}
+    <p><span class="font-medium text-gray-800">{{ label }}:</span> {{ why }}</p>
+    {% endfor %}
+  </div>
+</details>

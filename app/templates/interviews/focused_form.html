@@ -1,0 +1,61 @@
+{% extends "base.html" %}
+{% block title %}{{ interview.interview_type.value | replace('_', ' ') | title }} · {{ application.candidate.full_name }}{% endblock %}
+{% block content %}
+<p class="text-sm text-gray-500 mb-1"><a href="/applications/{{ application.id }}" class="hover:underline">&larr; {{ application.candidate.full_name }}</a></p>
+<h1 class="text-2xl font-bold mb-2">{{ interview.interview_type.value | replace('_', ' ') | title }} interview</h1>
+<p class="text-sm text-gray-500 mb-6">
+  Rate the candidate against each scorecard item with real evidence from what you observed.
+  {% if interview.interview_type.value == "demo_lesson" %}This is a demo lesson: watch them teach and grade the delivery against the same items.{% endif %}
+</p>
+
+{% if interview.status.value == "completed" %}
+<div class="bg-white border border-gray-200 rounded-md p-4 text-sm mb-6">
+  <p class="text-gray-600 mb-3">{{ interview.notes or "No notes recorded." }}</p>
+  <table class="w-full text-sm">
+    <tbody>
+      {% for rating in interview.ratings %}
+      <tr class="border-t border-gray-100">
+        <td class="py-2 font-medium pr-3">{{ rating.scorecard_item.title }}</td>
+        <td class="py-2 pr-3 font-semibold">{{ rating.grade.value }}</td>
+        <td class="py-2 text-gray-600">{{ rating.evidence }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% elif can_submit %}
+<form method="post" action="/interviews/{{ interview.id }}/focused" class="space-y-6 bg-white border border-gray-200 rounded-md p-6">
+  <div>
+    <label class="block text-sm font-medium mb-1">Notes</label>
+    <textarea name="notes" rows="4" class="w-full border border-gray-300 rounded px-3 py-2 text-sm"></textarea>
+  </div>
+
+  {% for item in items %}
+  <div class="border-t border-gray-100 pt-4">
+    <p class="font-medium text-sm">{{ item.title }} <span class="text-gray-400">({{ item.kind.value }})</span></p>
+    <p class="text-sm text-gray-600 mb-2">{{ item.description }}</p>
+    <div class="flex flex-wrap gap-3 items-start">
+      <select name="grade_{{ item.id }}" required class="border border-gray-300 rounded px-2 py-1.5 text-sm">
+        <option value="">Grade</option>
+        {% for g in grades %}
+        <option value="{{ g.value }}" {% if existing_ratings.get(item.id) and existing_ratings[item.id].grade == g %}selected{% endif %}>{{ g.value }}</option>
+        {% endfor %}
+      </select>
+      <textarea name="evidence_{{ item.id }}" required rows="2" placeholder="Evidence (required)" class="flex-1 min-w-[250px] border border-gray-300 rounded px-2 py-1.5 text-sm">{{ existing_ratings[item.id].evidence if existing_ratings.get(item.id) else "" }}</textarea>
+    </div>
+  </div>
+  {% endfor %}
+
+  <button class="bg-blue-600 text-white font-medium px-4 py-2 rounded-md hover:bg-blue-700">Submit ratings</button>
+</form>
+{% else %}
+<p class="text-gray-500">Only the assigned interviewer can fill this in.</p>
+{% endif %}
+
+{% if can_release and interview.status.value == "assigned" %}
+<form method="post" action="/interviews/{{ interview.id }}/release" class="mt-6 flex gap-2">
+  <input name="reason" required placeholder="Reason for releasing this interviewer" class="border border-gray-300 rounded px-3 py-1.5 text-sm w-72">
+  <button class="text-sm bg-gray-600 text-white px-3 py-1.5 rounded-md hover:bg-gray-700">Release interviewer</button>
+</form>
+{% endif %}
+{% endblock %}

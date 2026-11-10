@@ -26,20 +26,20 @@ Re-read this file and CLAUDE.md whenever resuming work or recovering from lost c
 - [x] Tests, smoke test, commit "Phase 2: ..."
 
 ## Phase 3: Core workflow screens
-- [ ] Shared UI: stage tracker, "Why this step" notes, gate panel, flash messages
-- [ ] Openings list + filters + create form
-- [ ] Opening detail: scorecard editor + approve + pipeline by stage
-- [ ] Add candidate to opening (dedupe by email)
-- [ ] Application page: tracker, gate panel, advance/reject/withdraw, chairman override
-- [ ] Interview assignment + screening/who/focused/demo forms + release action
-- [ ] Ratings matrix (visibility-aware)
-- [ ] References: named referees + reference interview form + complete
-- [ ] Safeguarding checklist (auto-created at references stage)
-- [ ] Decision form (outcome/grade/rationale) w/ ratings+references shown
-- [ ] Sell plan form (Fit/Family/Freedom/Fortune/Fun)
-- [ ] Decision record (printable)
-- [ ] My interviews page
-- [ ] Tests, smoke test, commit "Phase 3: ..."
+- [x] Shared UI: stage tracker, "Why this step" notes, gate panel, flash messages
+- [x] Openings list + filters + create form
+- [x] Opening detail: scorecard editor + approve + pipeline by stage
+- [x] Add candidate to opening (dedupe by email)
+- [x] Application page: tracker, gate panel, advance/reject/withdraw, chairman override
+- [x] Interview assignment + screening/who/focused/demo forms + release action
+- [x] Ratings matrix (visibility-aware)
+- [x] References: named referees + reference interview form + complete
+- [x] Safeguarding checklist (auto-created at references stage)
+- [x] Decision form (outcome/grade/rationale) w/ ratings+references shown
+- [x] Sell plan form (Fit/Family/Freedom/Fortune/Fun)
+- [x] Decision record (printable)
+- [x] My interviews page
+- [x] Tests, smoke test, commit "Phase 3: ..."
 
 ## Phase 4: Chairman dashboard
 - [ ] Openings + stage counts, hires to date, avg days to hire

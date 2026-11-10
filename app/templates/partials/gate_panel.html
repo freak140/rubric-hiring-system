@@ -1,0 +1,10 @@
+{% if gate_result and not gate_result.allowed %}
+<div class="mb-6 rounded-md border border-amber-300 bg-amber-50 px-4 py-3">
+  <p class="text-sm font-medium text-amber-900 mb-1">Not ready for the next step:</p>
+  <ul class="list-disc list-inside text-sm text-amber-800">
+    {% for reason in gate_result.reasons %}
+    <li>{{ reason }}</li>
+    {% endfor %}
+  </ul>
+</div>
+{% endif %}

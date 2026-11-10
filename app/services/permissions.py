@@ -5,7 +5,8 @@ the current user cannot take) -- never duplicated as ad-hoc role checks
 elsewhere.
 """
 
-from app.models.enums import AppRole
+from app.models.applications import Application
+from app.models.enums import AppRole, InterviewType
 from app.models.interviews import Interview
 from app.models.openings import RoleOpening
 from app.models.users import User
@@ -45,6 +46,16 @@ def can_record_sell_plan(user: User, opening: RoleOpening) -> bool:
 
 def can_manage_references(user: User) -> bool:
     return user.app_role in (AppRole.chairman, AppRole.hr)
+
+
+def can_name_reference(user: User, application: Application) -> bool:
+    """Naming a reference is narrower than managing it: the Who interviewer does
+    this live, during their interview, in addition to chairman/hr."""
+    if can_manage_references(user):
+        return True
+    return user.app_role == AppRole.interviewer and any(
+        i.interview_type == InterviewType.who and i.interviewer_id == user.id for i in application.interviews
+    )
 
 
 def can_manage_safeguarding(user: User) -> bool:

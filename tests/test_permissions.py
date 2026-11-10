@@ -1,6 +1,6 @@
 from app.models.enums import AppRole, InterviewStatus, InterviewType
 from app.services import permissions
-from tests.factories import make_interview, make_opening, make_user
+from tests.factories import make_application, make_interview, make_opening, make_user
 
 
 def test_chairman_can_create_opening_anyone_else_restricted_to_principal():
@@ -53,8 +53,6 @@ def test_only_chairman_sees_dashboard_audit_log_and_can_override():
 def test_only_the_assigned_interviewer_can_submit_their_rating():
     principal = make_user(AppRole.principal)
     opening = make_opening(principal)
-    from tests.factories import make_application
-
     application = make_application(opening)
     interviewer = make_user(AppRole.interviewer)
     other_interviewer = make_user(AppRole.interviewer)
@@ -67,8 +65,6 @@ def test_only_the_assigned_interviewer_can_submit_their_rating():
 def test_interviewer_can_only_view_their_own_assigned_interview():
     principal = make_user(AppRole.principal)
     opening = make_opening(principal)
-    from tests.factories import make_application
-
     application = make_application(opening)
     interviewer = make_user(AppRole.interviewer)
     other_interviewer = make_user(AppRole.interviewer)
@@ -82,3 +78,20 @@ def test_interviewer_can_only_view_their_own_assigned_interview():
     hr = make_user(AppRole.hr)
     assert permissions.can_view_interview(chairman, interview)
     assert permissions.can_view_interview(hr, interview)
+
+
+def test_who_interviewer_and_hr_chairman_can_name_a_reference_but_others_cannot():
+    principal = make_user(AppRole.principal)
+    opening = make_opening(principal)
+    application = make_application(opening)
+    who_interviewer = make_user(AppRole.interviewer)
+    other_interviewer = make_user(AppRole.interviewer)
+    make_interview(application, InterviewType.who, who_interviewer, InterviewStatus.completed)
+
+    chairman = make_user(AppRole.chairman)
+    hr = make_user(AppRole.hr)
+    assert permissions.can_name_reference(chairman, application)
+    assert permissions.can_name_reference(hr, application)
+    assert permissions.can_name_reference(who_interviewer, application)
+    assert not permissions.can_name_reference(other_interviewer, application)
+    assert not permissions.can_name_reference(principal, application)

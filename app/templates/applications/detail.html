@@ -1,0 +1,270 @@
+{% extends "base.html" %}
+{% block title %}{{ application.candidate.full_name }} · Rubric{% endblock %}
+{% block content %}
+<p class="text-sm text-gray-500 mb-1">
+  <a href="/openings/{{ opening.id }}" class="hover:underline">{{ opening.title }}</a>
+</p>
+<div class="flex items-center justify-between mb-6">
+  <h1 class="text-2xl font-bold">{{ application.candidate.full_name }}</h1>
+  <a href="/applications/{{ application.id }}/record" class="text-sm text-blue-700 hover:underline">View decision record</a>
+</div>
+<p class="text-sm text-gray-500 mb-6">{{ application.candidate.email }} · Source: {{ application.candidate.source.value | replace('_', ' ') | title }}{% if application.candidate.source_detail %} ({{ application.candidate.source_detail }}){% endif %}</p>
+
+{% include "partials/stage_tracker.html" %}
+{% include "partials/gate_panel.html" %}
+
+{% if application.stage.value not in ("hired", "rejected", "withdrawn") %}
+<div class="flex flex-wrap items-center gap-3 mb-10">
+  {% if gate_result and gate_result.allowed %}
+  <form method="post" action="/applications/{{ application.id }}/advance">
+    <button class="bg-blue-600 text-white font-medium px-4 py-2 rounded-md hover:bg-blue-700">
+      Advance to {{ next_stage.value | replace('_', ' ') | title }}
+    </button>
+  </form>
+  {% endif %}
+
+  {% if can_reject_or_withdraw %}
+  <details>
+    <summary class="cursor-pointer select-none text-sm text-red-600 px-3 py-2 border border-red-200 rounded-md">Reject</summary>
+    <form method="post" action="/applications/{{ application.id }}/reject" class="mt-2 flex gap-2">
+      <input name="reason" required placeholder="Reason" class="border border-gray-300 rounded px-3 py-1.5 text-sm">
+      <button class="text-sm bg-red-600 text-white px-3 py-1.5 rounded-md hover:bg-red-700">Confirm reject</button>
+    </form>
+  </details>
+  <details>
+    <summary class="cursor-pointer select-none text-sm text-gray-600 px-3 py-2 border border-gray-200 rounded-md">Withdraw</summary>
+    <form method="post" action="/applications/{{ application.id }}/withdraw" class="mt-2 flex gap-2">
+      <input name="reason" required placeholder="Reason" class="border border-gray-300 rounded px-3 py-1.5 text-sm">
+      <button class="text-sm bg-gray-600 text-white px-3 py-1.5 rounded-md hover:bg-gray-700">Confirm withdraw</button>
+    </form>
+  </details>
+  {% endif %}
+
+  {% if can_override and gate_result and not gate_result.allowed %}
+  <details class="border border-purple-300 rounded-md px-3 py-2">
+    <summary class="cursor-pointer select-none text-sm text-purple-700 font-medium">Chairman override</summary>
+    <form method="post" action="/applications/{{ application.id }}/override" class="mt-2 flex gap-2">
+      <input name="override_reason" required placeholder="Reason for overriding the gate" class="border border-gray-300 rounded px-3 py-1.5 text-sm w-72">
+      <button class="text-sm bg-purple-700 text-white px-3 py-1.5 rounded-md hover:bg-purple-800">Override and advance</button>
+    </form>
+  </details>
+  {% endif %}
+</div>
+{% endif %}
+
+<section class="mb-10">
+  <div class="flex items-center justify-between mb-3">
+    <h2 class="text-lg font-semibold">Interviews</h2>
+  </div>
+  <div class="bg-white border border-gray-200 rounded-md divide-y mb-3">
+    {% for interview in application.interviews | sort(attribute="id") %}
+    <a href="/interviews/{{ interview.id }}" class="block px-4 py-3 hover:bg-gray-50">
+      <div class="flex items-center justify-between">
+        <div>
+          <p class="text-sm font-medium">{{ interview.interview_type.value | replace('_', ' ') | title }} — {{ interview.interviewer.name }}</p>
+          {% if interview.status.value == "released" %}<p class="text-xs text-gray-500">Released: {{ interview.release_reason }}</p>{% endif %}
+        </div>
+        <span class="text-xs font-medium px-2 py-1 rounded-full
+          {% if interview.status.value == 'completed' %}bg-green-100 text-green-800
+          {% elif interview.status.value == 'released' %}bg-gray-100 text-gray-600
+          {% else %}bg-amber-100 text-amber-800{% endif %}">
+          {{ interview.status.value | title }}
+        </span>
+      </div>
+    </a>
+    {% else %}
+    <p class="px-4 py-3 text-sm text-gray-400">No interviews yet.</p>
+    {% endfor %}
+  </div>
+
+  {% if can_assign_interviewer %}
+  <details>
+    <summary class="text-sm text-blue-600 cursor-pointer select-none">+ Assign an interviewer</summary>
+    <form method="post" action="/applications/{{ application.id }}/interviews" class="mt-2 flex flex-wrap gap-2 bg-white border border-gray-200 rounded-md p-3">
+      <select name="interview_type" class="border border-gray-300 rounded px-2 py-1.5 text-sm">
+        {% for t in interview_types %}
+        <option value="{{ t.value }}">{{ t.value | replace('_', ' ') | title }}</option>
+        {% endfor %}
+      </select>
+      <select name="interviewer_id" class="border border-gray-300 rounded px-2 py-1.5 text-sm">
+        {% for i in interviewers %}
+        <option value="{{ i.id }}">{{ i.name }}</option>
+        {% endfor %}
+      </select>
+      <button class="text-sm bg-blue-600 text-white px-3 py-1.5 rounded-md hover:bg-blue-700">Assign</button>
+    </form>
+  </details>
+  {% endif %}
+</section>
+
+{% if rated_interviews %}
+<section class="mb-10 overflow-x-auto">
+  <h2 class="text-lg font-semibold mb-3">Ratings matrix</h2>
+  <table class="min-w-full bg-white border border-gray-200 rounded-md text-sm">
+    <thead>
+      <tr class="border-b border-gray-200">
+        <th class="text-left px-3 py-2">Scorecard item</th>
+        {% for interview in rated_interviews %}
+        <th class="text-left px-3 py-2">{{ interview.interviewer.name }}<br><span class="text-xs text-gray-400">{{ interview.interview_type.value | replace('_', ' ') | title }}</span></th>
+        {% endfor %}
+      </tr>
+    </thead>
+    <tbody>
+      {% for item in opening.scorecard.items | sort(attribute="position") if opening.scorecard %}
+      <tr class="border-b border-gray-100">
+        <td class="px-3 py-2 font-medium">{{ item.title }}</td>
+        {% for interview in rated_interviews %}
+        <td class="px-3 py-2 align-top">
+          {% if ratings_visibility.get(interview.id) %}
+            {% set rating = (interview.ratings | selectattr("scorecard_item_id", "equalto", item.id) | list | first) %}
+            {% if rating %}
+            <span class="font-semibold">{{ rating.grade.value }}</span>
+            <p class="text-xs text-gray-500">{{ rating.evidence }}</p>
+            {% else %}
+            <span class="text-gray-400 text-xs">Not rated</span>
+            {% endif %}
+          {% else %}
+          <span class="text-gray-400 text-xs italic">Hidden until you submit your own ratings</span>
+          {% endif %}
+        </td>
+        {% endfor %}
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</section>
+{% endif %}
+
+<section class="mb-10">
+  <div class="flex items-center justify-between mb-3">
+    <h2 class="text-lg font-semibold">References</h2>
+  </div>
+  <div class="bg-white border border-gray-200 rounded-md divide-y mb-3">
+    {% for reference in application.references %}
+    <div class="px-4 py-3 flex items-center justify-between">
+      <div>
+        <p class="text-sm font-medium">{{ reference.referee_name }} <span class="text-gray-400">({{ reference.referee_relationship.value | replace('_', ' ') | title }})</span></p>
+        {% if reference.status.value == "completed" %}<p class="text-xs text-gray-500">{{ reference.notes }}</p>{% endif %}
+      </div>
+      <div class="flex items-center gap-2">
+        <span class="text-xs font-medium px-2 py-1 rounded-full {% if reference.status.value == 'completed' %}bg-green-100 text-green-800{% else %}bg-amber-100 text-amber-800{% endif %}">
+          {{ reference.status.value | title }}
+        </span>
+        {% if can_manage_references and reference.status.value != "completed" %}
+        <a href="/references/{{ reference.id }}" class="text-sm text-blue-700 hover:underline">Conduct</a>
+        {% endif %}
+      </div>
+    </div>
+    {% else %}
+    <p class="px-4 py-3 text-sm text-gray-400">No references named yet.</p>
+    {% endfor %}
+  </div>
+
+  {% if can_name_reference %}
+  <details>
+    <summary class="text-sm text-blue-600 cursor-pointer select-none">+ Name a reference</summary>
+    <form method="post" action="/applications/{{ application.id }}/references" class="mt-2 flex flex-wrap gap-2 bg-white border border-gray-200 rounded-md p-3">
+      <input name="referee_name" required placeholder="Referee name" class="border border-gray-300 rounded px-2 py-1.5 text-sm">
+      <select name="referee_relationship" class="border border-gray-300 rounded px-2 py-1.5 text-sm">
+        <option value="former_manager">Former manager</option>
+        <option value="peer">Peer</option>
+        <option value="direct_report">Direct report</option>
+        <option value="other">Other</option>
+      </select>
+      <input name="contact" placeholder="Phone or email (optional)" class="border border-gray-300 rounded px-2 py-1.5 text-sm">
+      <button class="text-sm bg-blue-600 text-white px-3 py-1.5 rounded-md hover:bg-blue-700">Add</button>
+    </form>
+  </details>
+  {% endif %}
+</section>
+
+{% if application.safeguarding_checks %}
+<section class="mb-10">
+  <h2 class="text-lg font-semibold mb-3">Safeguarding checklist</h2>
+  <div class="bg-white border border-gray-200 rounded-md divide-y">
+    {% for check in application.safeguarding_checks %}
+    <div class="px-4 py-3">
+      <div class="flex items-center justify-between">
+        <p class="text-sm font-medium">{{ check.check_name }}</p>
+        <span class="text-xs font-medium px-2 py-1 rounded-full
+          {% if check.status.value == 'cleared' %}bg-green-100 text-green-800
+          {% elif check.status.value == 'flagged' %}bg-red-100 text-red-800
+          {% else %}bg-amber-100 text-amber-800{% endif %}">
+          {{ check.status.value | title }}
+        </span>
+      </div>
+      {% if check.notes %}<p class="text-xs text-gray-500 mt-1">{{ check.notes }}</p>{% endif %}
+      {% if check.verified_by %}<p class="text-xs text-gray-400 mt-1">Verified by {{ check.verified_by.name }}</p>{% endif %}
+      {% if can_manage_safeguarding %}
+      <form method="post" action="/safeguarding/{{ check.id }}" class="mt-2 flex flex-wrap gap-2">
+        <select name="status" class="border border-gray-300 rounded px-2 py-1 text-sm">
+          <option value="pending" {% if check.status.value == "pending" %}selected{% endif %}>Pending</option>
+          <option value="cleared" {% if check.status.value == "cleared" %}selected{% endif %}>Cleared</option>
+          <option value="flagged" {% if check.status.value == "flagged" %}selected{% endif %}>Flagged</option>
+        </select>
+        <input name="notes" value="{{ check.notes or '' }}" placeholder="Notes" class="border border-gray-300 rounded px-2 py-1 text-sm flex-1 min-w-[150px]">
+        <button class="text-sm bg-gray-700 text-white px-3 py-1 rounded-md hover:bg-gray-800">Save</button>
+      </form>
+      {% endif %}
+    </div>
+    {% endfor %}
+  </div>
+</section>
+{% endif %}
+
+{% if application.stage.value in ("decision", "offer", "hired") or application.decision %}
+<section class="mb-10">
+  <h2 class="text-lg font-semibold mb-3">Decision</h2>
+  {% if application.decision %}
+  <div class="bg-white border border-gray-200 rounded-md p-4 text-sm">
+    <p><span class="font-medium">Outcome:</span> {{ application.decision.outcome.value | replace('_', ' ') | title }}</p>
+    <p><span class="font-medium">Overall grade:</span> {{ application.decision.overall_grade.value }}</p>
+    <p class="mt-2"><span class="font-medium">Rationale:</span> {{ application.decision.rationale }}</p>
+    <p class="text-xs text-gray-400 mt-2">Decided by {{ application.decision.decided_by.name }} on {{ application.decision.decided_at.strftime('%d %b %Y') }}</p>
+  </div>
+  {% endif %}
+  {% if can_record_decision and application.stage.value == "decision" %}
+  <form method="post" action="/applications/{{ application.id }}/decision" class="mt-3 space-y-2 bg-white border border-gray-200 rounded-md p-4">
+    <div class="flex gap-3">
+      <select name="outcome" class="border border-gray-300 rounded px-2 py-1.5 text-sm">
+        <option value="hire">Hire</option>
+        <option value="no_hire">No hire</option>
+      </select>
+      <select name="overall_grade" class="border border-gray-300 rounded px-2 py-1.5 text-sm">
+        <option value="A">A</option>
+        <option value="B">B</option>
+        <option value="C">C</option>
+      </select>
+    </div>
+    <textarea name="rationale" required rows="3" placeholder="Rationale (required)" class="w-full border border-gray-300 rounded px-3 py-2 text-sm"></textarea>
+    <button class="text-sm bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700">Save decision</button>
+  </form>
+  {% endif %}
+</section>
+{% endif %}
+
+{% if application.decision and application.decision.outcome.value == "hire" %}
+<section class="mb-10">
+  <h2 class="text-lg font-semibold mb-3">Sell plan</h2>
+  {% if can_record_sell_plan %}
+  <form method="post" action="/applications/{{ application.id }}/sell-plan" class="space-y-3 bg-white border border-gray-200 rounded-md p-4 text-sm">
+    {% set sp = application.sell_plan %}
+    {% for field, hint in [
+      ("fit", "Why this role fits who they are."),
+      ("family", "What matters to the people in their life."),
+      ("freedom", "The autonomy or flexibility that matters to them."),
+      ("fortune", "Compensation and growth, framed honestly."),
+      ("fun", "What makes the work and the team enjoyable."),
+    ] %}
+    <div>
+      <label class="block font-medium mb-1 capitalize">{{ field }}</label>
+      <p class="text-xs text-gray-400 mb-1">{{ hint }}</p>
+      <textarea name="{{ field }}" rows="2" class="w-full border border-gray-300 rounded px-3 py-2">{{ sp[field] if sp else "" }}</textarea>
+    </div>
+    {% endfor %}
+    <button class="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700">Save sell plan</button>
+  </form>
+  {% endif %}
+</section>
+{% endif %}
+{% endblock %}

@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+{% block title %}Create opening · Rubric{% endblock %}
+{% block content %}
+<h1 class="text-2xl font-bold mb-6">Create opening</h1>
+
+<form method="post" action="/openings" class="max-w-lg space-y-4 bg-white border border-gray-200 rounded-md p-6">
+  <div>
+    <label class="block text-sm font-medium mb-1">Title</label>
+    <input name="title" required class="w-full border border-gray-300 rounded px-3 py-2" placeholder="e.g. Grade 8 Mathematics Teacher">
+  </div>
+  <div>
+    <label class="block text-sm font-medium mb-1">Role type</label>
+    <select name="role_type" class="w-full border border-gray-300 rounded px-3 py-2">
+      {% for t in role_types %}
+      <option value="{{ t.value }}">{{ t.value | replace('_', '-') | title }}</option>
+      {% endfor %}
+    </select>
+  </div>
+  <div>
+    <label class="block text-sm font-medium mb-1">Department</label>
+    <input name="department" required class="w-full border border-gray-300 rounded px-3 py-2" placeholder="e.g. Academics">
+  </div>
+  {% if current_user.app_role.value == "chairman" %}
+  <div>
+    <label class="block text-sm font-medium mb-1">Hiring manager (principal)</label>
+    <select name="hiring_manager_id" required class="w-full border border-gray-300 rounded px-3 py-2">
+      {% for p in principals %}
+      <option value="{{ p.id }}">{{ p.name }}</option>
+      {% endfor %}
+    </select>
+  </div>
+  {% else %}
+  <p class="text-sm text-gray-500">You will be the hiring manager for this opening.</p>
+  {% endif %}
+  <button type="submit" class="bg-blue-600 text-white font-medium px-4 py-2 rounded-md hover:bg-blue-700">
+    Create opening
+  </button>
+</form>
+{% endblock %}

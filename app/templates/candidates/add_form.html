@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+{% block title %}Add candidate · Rubric{% endblock %}
+{% block content %}
+<h1 class="text-2xl font-bold mb-2">Add a candidate</h1>
+<p class="text-sm text-gray-500 mb-6">For {{ opening.title }}</p>
+
+<form method="post" action="/openings/{{ opening.id }}/candidates" class="max-w-lg space-y-4 bg-white border border-gray-200 rounded-md p-6">
+  <div>
+    <label class="block text-sm font-medium mb-1">Full name</label>
+    <input name="full_name" required class="w-full border border-gray-300 rounded px-3 py-2">
+  </div>
+  <div>
+    <label class="block text-sm font-medium mb-1">Email</label>
+    <input type="email" name="email" required class="w-full border border-gray-300 rounded px-3 py-2">
+    <p class="text-xs text-gray-400 mt-1">If this email already exists, the existing candidate record is reused.</p>
+  </div>
+  <div>
+    <label class="block text-sm font-medium mb-1">Phone (optional)</label>
+    <input name="phone" class="w-full border border-gray-300 rounded px-3 py-2">
+  </div>
+  <div>
+    <label class="block text-sm font-medium mb-1">Source</label>
+    <select name="source" class="w-full border border-gray-300 rounded px-3 py-2">
+      {% for s in sources %}
+      <option value="{{ s.value }}">{{ s.value | replace('_', ' ') | title }}</option>
+      {% endfor %}
+    </select>
+  </div>
+  <div>
+    <label class="block text-sm font-medium mb-1">Source detail (optional)</label>
+    <input name="source_detail" placeholder="e.g. referred by Priya Sharma" class="w-full border border-gray-300 rounded px-3 py-2">
+  </div>
+  <button type="submit" class="bg-blue-600 text-white font-medium px-4 py-2 rounded-md hover:bg-blue-700">
+    Add to pipeline
+  </button>
+</form>
+{% endblock %}

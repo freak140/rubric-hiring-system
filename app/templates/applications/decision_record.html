@@ -1,0 +1,110 @@
+{% extends "base.html" %}
+{% block title %}Decision record · {{ application.candidate.full_name }}{% endblock %}
+{% block content %}
+<style>
+  @media print {
+    header, .no-print { display: none !important; }
+    main { max-width: 100% !important; }
+  }
+</style>
+<div class="flex items-center justify-between mb-6 no-print">
+  <h1 class="text-2xl font-bold">Decision record</h1>
+  <button onclick="window.print()" class="text-sm bg-gray-700 text-white px-4 py-2 rounded-md hover:bg-gray-800">Print</button>
+</div>
+
+<h1 class="text-2xl font-bold mb-1">{{ application.candidate.full_name }}</h1>
+<p class="text-gray-600 mb-6">{{ opening.title }} · {{ opening.department }}</p>
+
+<section class="mb-8">
+  <h2 class="text-lg font-semibold mb-2">Scorecard</h2>
+  {% if opening.scorecard %}
+  <p class="text-sm text-gray-700 mb-2"><span class="font-medium">Mission:</span> {{ opening.scorecard.mission }}</p>
+  <table class="w-full text-sm border border-gray-200">
+    <thead class="bg-gray-50"><tr><th class="text-left px-3 py-2">Kind</th><th class="text-left px-3 py-2">Item</th><th class="text-left px-3 py-2">Measure</th></tr></thead>
+    <tbody>
+      {% for item in opening.scorecard.items | sort(attribute="position") %}
+      <tr class="border-t border-gray-100">
+        <td class="px-3 py-2">{{ item.kind.value | title }}</td>
+        <td class="px-3 py-2">{{ item.title }} — {{ item.description }}</td>
+        <td class="px-3 py-2">{{ item.measure or "—" }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% else %}
+  <p class="text-sm text-gray-400">No scorecard.</p>
+  {% endif %}
+</section>
+
+<section class="mb-8">
+  <h2 class="text-lg font-semibold mb-2">Interviews</h2>
+  {% for interview in application.interviews | sort(attribute="id") %}
+  <div class="border border-gray-200 rounded-md p-3 mb-2 text-sm">
+    <p class="font-medium">{{ interview.interview_type.value | replace('_', ' ') | title }} — {{ interview.interviewer.name }} ({{ interview.status.value | title }})</p>
+    {% if interview.screening_outcome %}<p>Outcome: {{ interview.screening_outcome.value | title }}</p>{% endif %}
+    {% if interview.notes %}<p class="text-gray-600 mt-1">Notes: {{ interview.notes }}</p>{% endif %}
+    {% if interview.release_reason %}<p class="text-gray-600 mt-1">Released: {{ interview.release_reason }}</p>{% endif %}
+    {% if interview.ratings %}
+    <ul class="mt-2 list-disc list-inside">
+      {% for rating in interview.ratings %}
+      <li>{{ rating.scorecard_item.title }}: <span class="font-semibold">{{ rating.grade.value }}</span> — {{ rating.evidence }}</li>
+      {% endfor %}
+    </ul>
+    {% endif %}
+  </div>
+  {% else %}
+  <p class="text-sm text-gray-400">No interviews.</p>
+  {% endfor %}
+</section>
+
+<section class="mb-8">
+  <h2 class="text-lg font-semibold mb-2">References</h2>
+  {% for reference in application.references %}
+  <div class="border border-gray-200 rounded-md p-3 mb-2 text-sm">
+    <p class="font-medium">{{ reference.referee_name }} ({{ reference.referee_relationship.value | replace('_', ' ') | title }}) — {{ reference.status.value | title }}</p>
+    {% if reference.notes %}<p class="text-gray-600 mt-1">{{ reference.notes }}</p>{% endif %}
+  </div>
+  {% else %}
+  <p class="text-sm text-gray-400">No references.</p>
+  {% endfor %}
+</section>
+
+<section class="mb-8">
+  <h2 class="text-lg font-semibold mb-2">Safeguarding checks</h2>
+  {% for check in application.safeguarding_checks %}
+  <p class="text-sm">{{ check.check_name }}: <span class="font-medium">{{ check.status.value | title }}</span>{% if check.notes %} — {{ check.notes }}{% endif %}</p>
+  {% else %}
+  <p class="text-sm text-gray-400">No safeguarding checks.</p>
+  {% endfor %}
+</section>
+
+<section class="mb-8">
+  <h2 class="text-lg font-semibold mb-2">Decision</h2>
+  {% if application.decision %}
+  <p class="text-sm"><span class="font-medium">Outcome:</span> {{ application.decision.outcome.value | replace('_', ' ') | title }} · <span class="font-medium">Grade:</span> {{ application.decision.overall_grade.value }}</p>
+  <p class="text-sm mt-1"><span class="font-medium">Rationale:</span> {{ application.decision.rationale }}</p>
+  <p class="text-xs text-gray-400 mt-1">Decided by {{ application.decision.decided_by.name }} on {{ application.decision.decided_at.strftime('%d %b %Y') }}</p>
+  {% else %}
+  <p class="text-sm text-gray-400">No decision recorded yet.</p>
+  {% endif %}
+</section>
+
+<section class="mb-8">
+  <h2 class="text-lg font-semibold mb-2">Audit trail</h2>
+  <table class="w-full text-sm border border-gray-200">
+    <thead class="bg-gray-50"><tr><th class="text-left px-3 py-2">When</th><th class="text-left px-3 py-2">Who</th><th class="text-left px-3 py-2">Action</th><th class="text-left px-3 py-2">Details</th></tr></thead>
+    <tbody>
+      {% for event in audit_trail %}
+      <tr class="border-t border-gray-100 {% if event.is_override %}bg-purple-50{% endif %}">
+        <td class="px-3 py-2 whitespace-nowrap">{{ event.created_at.strftime('%d %b %Y %H:%M') }}</td>
+        <td class="px-3 py-2">{{ event.actor.name if event.actor else "System" }}</td>
+        <td class="px-3 py-2">{{ event.action }}{% if event.is_override %} <span class="text-purple-700 font-medium">(override)</span>{% endif %}</td>
+        <td class="px-3 py-2 text-gray-500">
+          {% if event.override_reason %}{{ event.override_reason }}{% elif event.details %}{{ event.details }}{% endif %}
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</section>
+{% endblock %}
