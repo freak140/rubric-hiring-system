@@ -6,6 +6,7 @@ from fastapi.templating import Jinja2Templates
 from sqlalchemy import or_, select
 from sqlalchemy.orm import Session, selectinload
 
+from app.config import settings
 from app.db import get_db
 from app.dependencies import get_template_context, set_flash
 from app.models.audit import AuditEvent
@@ -15,6 +16,8 @@ from app.models.sell_plans import SellPlan
 from app.models.users import User
 from app.routers._common import load_application
 from app.services import gates, permissions, visibility
+from app.services.ai.client import AIUnavailableError
+from app.services.ai.features import peek_decision_summary, summarize_decision
 from app.services.audit import log_event
 from app.services.workflow import WorkflowError, advance_application
 
@@ -30,6 +33,23 @@ def _ratings_matrix(application) -> list[dict]:
     return rated_interviews
 
 
+def _ratings_text(application) -> str:
+    lines = []
+    for interview in _ratings_matrix(application):
+        for rating in interview.ratings:
+            lines.append(f"{rating.scorecard_item.title}: grade {rating.grade.value} -- {rating.evidence}")
+    return "\n".join(lines) or "No ratings recorded yet."
+
+
+def _references_text(application) -> str:
+    lines = [
+        f"{r.referee_name} ({r.referee_relationship.value}): {r.notes}"
+        for r in application.references
+        if r.status.value == "completed" and r.notes
+    ]
+    return "\n".join(lines) or "No completed references yet."
+
+
 @router.get("/{application_id}")
 def application_detail(application_id: int, context: dict = Depends(get_template_context), db: Session = Depends(get_db)):
     application = load_application(db, application_id)
@@ -43,6 +63,10 @@ def application_detail(application_id: int, context: dict = Depends(get_template
     rated_interviews = _ratings_matrix(application)
     ratings_visibility = {i.id: visibility.can_view_ratings(current_user, i) for i in rated_interviews}
     interviewers = db.scalars(select(User).where(User.app_role == AppRole.interviewer).order_by(User.name)).all()
+
+    ai_decision_summary = None
+    if settings.AI_ENABLED and application.stage == ApplicationStage.decision:
+        ai_decision_summary = peek_decision_summary(db, _ratings_text(application), _references_text(application))
 
     return templates.TemplateResponse(
         context["request"],
@@ -65,6 +89,8 @@ def application_detail(application_id: int, context: dict = Depends(get_template
             "ratings_visibility": ratings_visibility,
             "interviewers": interviewers,
             "interview_types": list(InterviewType),
+            "ai_enabled": settings.AI_ENABLED,
+            "ai_decision_summary": ai_decision_summary,
         },
     )
 
@@ -152,6 +178,33 @@ def withdraw(
     except WorkflowError as exc:
         db.rollback()
         set_flash(response, "error", str(exc))
+    return response
+
+
+@router.post("/{application_id}/ai/decision-summary")
+def ai_decision_summary_route(application_id: int, context: dict = Depends(get_template_context), db: Session = Depends(get_db)):
+    application = load_application(db, application_id)
+    current_user = context["current_user"]
+    response = RedirectResponse(url=f"/applications/{application_id}", status_code=303)
+    if not settings.AI_ENABLED:
+        set_flash(response, "error", "AI is disabled.")
+        return response
+    if not permissions.can_record_decision(current_user, application.opening):
+        raise HTTPException(status_code=403, detail="You cannot use this here.")
+
+    try:
+        result = summarize_decision(db, _ratings_text(application), _references_text(application))
+    except AIUnavailableError as exc:
+        db.rollback()
+        set_flash(response, "error", str(exc))
+        return response
+
+    log_event(
+        db, current_user, "ai.decision_summary", "Application", application.id,
+        details={"provider": result.provider, "model": result.model, "cached": result.cached},
+    )
+    db.commit()
+    set_flash(response, "success", "AI draft: review before use.")
     return response
 
 

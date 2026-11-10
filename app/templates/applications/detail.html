@@ -223,6 +223,19 @@
     <p class="text-xs text-gray-400 mt-2">Decided by {{ application.decision.decided_by.name }} on {{ application.decision.decided_at.strftime('%d %b %Y') }}</p>
   </div>
   {% endif %}
+  {% if ai_enabled and can_record_decision and application.stage.value == "decision" %}
+  <div class="mt-3 bg-indigo-50 border border-indigo-200 rounded-md p-4">
+    {% if ai_decision_summary %}
+    <p class="text-xs text-indigo-700 font-medium mb-2">AI draft: review before use. Neutral summary, not a recommendation.</p>
+    <p class="text-sm text-gray-700">{{ ai_decision_summary.summary }}</p>
+    {% endif %}
+    <form method="post" action="/applications/{{ application.id }}/ai/decision-summary" class="mt-2">
+      <button class="text-sm bg-indigo-600 text-white px-3 py-1.5 rounded-md hover:bg-indigo-700">
+        {{ "Regenerate" if ai_decision_summary else "Summarise evidence (AI)" }}
+      </button>
+    </form>
+  </div>
+  {% endif %}
   {% if can_record_decision and application.stage.value == "decision" %}
   <form method="post" action="/applications/{{ application.id }}/decision" class="mt-3 space-y-2 bg-white border border-gray-200 rounded-md p-4">
     <div class="flex gap-3">

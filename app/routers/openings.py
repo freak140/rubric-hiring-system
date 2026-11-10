@@ -4,6 +4,7 @@ from fastapi.templating import Jinja2Templates
 from sqlalchemy import select
 from sqlalchemy.orm import Session, selectinload
 
+from app.config import settings
 from app.db import get_db
 from app.dependencies import get_template_context, set_flash
 from app.models.applications import Application
@@ -12,6 +13,8 @@ from app.models.openings import RoleOpening
 from app.models.scorecards import Scorecard, ScorecardItem
 from app.models.users import User
 from app.services import permissions
+from app.services.ai.client import AIUnavailableError
+from app.services.ai.features import draft_scorecard
 from app.services.audit import log_event
 from app.services.workflow import WorkflowError, approve_scorecard, assert_scorecard_editable
 
@@ -129,6 +132,7 @@ def opening_detail(opening_id: int, context: dict = Depends(get_template_context
             "item_kinds": list(ScorecardItemKind),
             "can_manage_scorecard": permissions.can_manage_scorecard(current_user, opening),
             "can_add_candidate": permissions.can_add_candidate(current_user),
+            "ai_enabled": settings.AI_ENABLED,
         },
     )
 
@@ -163,6 +167,68 @@ def update_scorecard_mission(
         db.rollback()
         response = RedirectResponse(url=f"/openings/{opening_id}", status_code=303)
         set_flash(response, "error", str(exc))
+    return response
+
+
+@router.post("/{opening_id}/scorecard/ai-draft")
+def ai_draft_scorecard(
+    opening_id: int,
+    brief: str = Form(...),
+    context: dict = Depends(get_template_context),
+    db: Session = Depends(get_db),
+):
+    opening = _load_opening(db, opening_id)
+    current_user = context["current_user"]
+    response = RedirectResponse(url=f"/openings/{opening_id}", status_code=303)
+    if not settings.AI_ENABLED:
+        set_flash(response, "error", "AI is disabled.")
+        return response
+    if not permissions.can_manage_scorecard(current_user, opening):
+        raise HTTPException(status_code=403, detail="You cannot edit this scorecard.")
+
+    try:
+        if opening.scorecard is not None:
+            assert_scorecard_editable(opening.scorecard)
+        result = draft_scorecard(db, opening, brief)
+    except AIUnavailableError as exc:
+        db.rollback()
+        set_flash(response, "error", str(exc))
+        return response
+    except WorkflowError as exc:
+        db.rollback()
+        set_flash(response, "error", str(exc))
+        return response
+
+    draft = result.output
+    if opening.scorecard is None:
+        new_scorecard = Scorecard(opening=opening, mission=draft.mission)
+        db.add(new_scorecard)
+        opening.scorecard = new_scorecard
+        db.flush()
+    next_position = max([i.position for i in opening.scorecard.items], default=-1) + 1
+    for outcome in draft.outcomes:
+        db.add(
+            ScorecardItem(
+                scorecard=opening.scorecard, kind=ScorecardItemKind.outcome, title=outcome.title,
+                description=outcome.description, measure=outcome.measure, position=next_position,
+            )
+        )
+        next_position += 1
+    for competency in draft.competencies:
+        db.add(
+            ScorecardItem(
+                scorecard=opening.scorecard, kind=ScorecardItemKind.competency, title=competency.title,
+                description=competency.description, measure=None, position=next_position,
+            )
+        )
+        next_position += 1
+
+    log_event(
+        db, current_user, "ai.scorecard_draft", "Scorecard", opening.scorecard.id,
+        details={"provider": result.provider, "model": result.model, "cached": result.cached},
+    )
+    db.commit()
+    set_flash(response, "success", "AI draft: review before use. Items inserted below.")
     return response
 
 

@@ -1,0 +1,21 @@
+{% if error %}
+<p class="text-sm text-red-600">{{ error }}</p>
+{% elif mapping %}
+<p class="text-xs text-indigo-700 font-medium mb-2">AI draft: review before use.</p>
+<ul class="space-y-2 text-sm">
+  {% for item in mapping.items %}
+  <li>
+    <p class="font-medium">{{ item.scorecard_item_title }}</p>
+    {% if item.quotes %}
+    <ul class="list-disc list-inside text-gray-600">
+      {% for quote in item.quotes %}
+      <li>&ldquo;{{ quote }}&rdquo;</li>
+      {% endfor %}
+    </ul>
+    {% else %}
+    <p class="text-gray-400 italic">No evidence found.</p>
+    {% endif %}
+  </li>
+  {% endfor %}
+</ul>
+{% endif %}

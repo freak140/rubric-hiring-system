@@ -6,15 +6,18 @@ from fastapi.templating import Jinja2Templates
 from sqlalchemy import select
 from sqlalchemy.orm import Session, selectinload
 
+from app.config import settings
 from app.db import get_db
 from app.dependencies import get_template_context, set_flash
 from app.models.applications import Application
-from app.models.enums import AppRole, Grade, InterviewStatus, InterviewType, RefereeRelationship, ScreeningOutcome
+from app.models.enums import AppRole, Grade, InterviewStatus, InterviewType, RefereeRelationship, RoleType, ScreeningOutcome
 from app.models.interviews import Interview, Rating
 from app.models.openings import RoleOpening
 from app.models.users import User
 from app.routers._common import load_application, load_interview
 from app.services import permissions
+from app.services.ai.client import AIUnavailableError
+from app.services.ai.features import generate_focused_questions, map_evidence, peek_focused_questions
 from app.services.audit import log_event
 from app.services.workflow import WorkflowError, release_interviewer
 
@@ -101,9 +104,18 @@ def interview_form(interview_id: int, context: dict = Depends(get_template_conte
     scorecard = interview.application.opening.scorecard
     items = sorted(scorecard.items, key=lambda i: i.position) if scorecard else []
     existing_ratings = {r.scorecard_item.id: r for r in interview.ratings}
+    is_teaching = interview.application.opening.role_type == RoleType.teaching
+    ai_questions = peek_focused_questions(db, items, is_teaching) if settings.AI_ENABLED and items else None
     return templates.TemplateResponse(
         context["request"], "interviews/focused_form.html",
-        {**base_ctx, "items": items, "existing_ratings": existing_ratings, "grades": list(Grade)},
+        {
+            **base_ctx,
+            "items": items,
+            "existing_ratings": existing_ratings,
+            "grades": list(Grade),
+            "ai_enabled": settings.AI_ENABLED,
+            "ai_questions": ai_questions,
+        },
     )
 
 
@@ -194,6 +206,78 @@ async def submit_focused(interview_id: int, request: Request, context: dict = De
     db.commit()
     set_flash(response, "success", "Ratings submitted.")
     return response
+
+
+@router.post("/interviews/{interview_id}/ai/focused-questions")
+def ai_focused_questions(interview_id: int, context: dict = Depends(get_template_context), db: Session = Depends(get_db)):
+    interview = load_interview(db, interview_id)
+    current_user = context["current_user"]
+    response = RedirectResponse(url=f"/interviews/{interview_id}", status_code=303)
+    if not settings.AI_ENABLED:
+        set_flash(response, "error", "AI is disabled.")
+        return response
+    if not permissions.can_submit_rating(current_user, interview):
+        raise HTTPException(status_code=403, detail="Only the assigned interviewer can use this.")
+
+    scorecard = interview.application.opening.scorecard
+    items = sorted(scorecard.items, key=lambda i: i.position) if scorecard else []
+    if not items:
+        set_flash(response, "error", "The opening has no scorecard items yet.")
+        return response
+
+    is_teaching = interview.application.opening.role_type == RoleType.teaching
+    try:
+        result = generate_focused_questions(db, items, is_teaching)
+    except AIUnavailableError as exc:
+        db.rollback()
+        set_flash(response, "error", str(exc))
+        return response
+
+    log_event(
+        db, current_user, "ai.focused_questions", "Interview", interview.id,
+        details={"provider": result.provider, "model": result.model, "cached": result.cached},
+    )
+    db.commit()
+    set_flash(response, "success", "AI draft: review before use.")
+    return response
+
+
+@router.post("/interviews/{interview_id}/ai/evidence-map")
+async def ai_evidence_map(interview_id: int, request: Request, context: dict = Depends(get_template_context), db: Session = Depends(get_db)):
+    interview = load_interview(db, interview_id)
+    current_user = context["current_user"]
+    if not permissions.can_submit_rating(current_user, interview):
+        raise HTTPException(status_code=403, detail="Only the assigned interviewer can use this.")
+
+    form = await request.form()
+    notes = (form.get("notes") or "").strip()
+    scorecard = interview.application.opening.scorecard
+    items = sorted(scorecard.items, key=lambda i: i.position) if scorecard else []
+
+    error = None
+    mapping = None
+    if not settings.AI_ENABLED:
+        error = "AI is disabled."
+    elif not notes:
+        error = "Add some interview notes first."
+    elif not items:
+        error = "The opening has no scorecard items yet."
+    else:
+        try:
+            result = map_evidence(db, notes, items)
+            mapping = result.output
+            log_event(
+                db, current_user, "ai.evidence_map", "Interview", interview.id,
+                details={"provider": result.provider, "model": result.model, "cached": result.cached},
+            )
+            db.commit()
+        except AIUnavailableError as exc:
+            db.rollback()
+            error = str(exc)
+
+    return templates.TemplateResponse(
+        context["request"], "interviews/_evidence_panel.html", {**context, "mapping": mapping, "error": error}
+    )
 
 
 @router.post("/interviews/{interview_id}/release")

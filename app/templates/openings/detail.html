@@ -47,6 +47,17 @@
     {% endif %}
   </div>
 
+  {% if ai_enabled and can_manage_scorecard and (not scorecard or scorecard.status.value != "approved") %}
+  <details class="mb-4">
+    <summary class="text-sm text-indigo-600 cursor-pointer select-none">+ Draft scorecard with AI</summary>
+    <form method="post" action="/openings/{{ opening.id }}/scorecard/ai-draft" class="mt-2 space-y-2 bg-indigo-50 border border-indigo-200 rounded-md p-3">
+      <textarea name="brief" required rows="2" placeholder="Short brief: what does this role need to accomplish?" class="w-full border border-gray-300 rounded px-2 py-1.5 text-sm"></textarea>
+      <button class="text-sm bg-indigo-600 text-white px-3 py-1.5 rounded-md hover:bg-indigo-700">Draft with AI</button>
+      <p class="text-xs text-gray-500">AI draft: review before use. Inserts draft items below for you to edit and approve.</p>
+    </form>
+  </details>
+  {% endif %}
+
   {% if scorecard %}
   {% for kind in item_kinds %}
   <div class="mb-4">

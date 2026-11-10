@@ -48,17 +48,17 @@ Re-read this file and CLAUDE.md whenever resuming work or recovering from lost c
 - [x] Tests, smoke test, commit "Phase 4: ..."
 
 ## Phase 5: AI assistance
-- [ ] app/services/ai/client.py: Groq -> Gemini fallback, retry/backoff, JSON validation retry, clear failure error
-- [ ] AIOutput caching by (task, sha256 input, prompt_version)
-- [ ] app/services/ai/prompts.py: versioned prompts, "never grades/scores/ranks/recommends"
-- [ ] Feature: draft scorecard
-- [ ] Feature: focused interview questions (+ demo lesson brief)
-- [ ] Feature: evidence mapping (quote verification against notes, no grade field)
-- [ ] Feature: decision summary (neutral, no recommendation)
-- [ ] AI_ENABLED gating in UI, audit log on every use, "AI draft: review before use" label
-- [ ] Tests with mocked API: quote guard, cache hit, provider fallback
-- [ ] scripts/eval_evidence.py with 3 sample notes + precision/recall
-- [ ] Tests, smoke test, commit "Phase 5: ..."
+- [x] app/services/ai/client.py: Groq -> Gemini fallback, retry/backoff, JSON validation retry, clear failure error
+- [x] AIOutput caching by (task, sha256 input, prompt_version)
+- [x] app/services/ai/prompts.py: versioned prompts, "never grades/scores/ranks/recommends"
+- [x] Feature: draft scorecard
+- [x] Feature: focused interview questions (+ demo lesson brief)
+- [x] Feature: evidence mapping (quote verification against notes, no grade field)
+- [x] Feature: decision summary (neutral, no recommendation)
+- [x] AI_ENABLED gating in UI, audit log on every use, "AI draft: review before use" label
+- [x] Tests with mocked API: quote guard, cache hit, provider fallback
+- [x] scripts/eval_evidence.py with 3 sample notes + precision/recall
+- [x] Tests, smoke test, commit "Phase 5: ..."
 
 ## Phase 6: Demo data, reset and demo guide
 - [ ] scripts/seed.py: idempotent TRUNCATE + realistic seed (users, 3 openings, 4+ candidates per spec)

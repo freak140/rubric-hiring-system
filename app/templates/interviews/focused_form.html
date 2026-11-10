@@ -8,6 +8,27 @@
   {% if interview.interview_type.value == "demo_lesson" %}This is a demo lesson: watch them teach and grade the delivery against the same items.{% endif %}
 </p>
 
+{% if ai_enabled and can_submit and interview.status.value != "completed" %}
+<div class="mb-6 bg-indigo-50 border border-indigo-200 rounded-md p-4">
+  {% if ai_questions %}
+  <p class="text-xs text-indigo-700 font-medium mb-2">AI draft: review before use.</p>
+  <ul class="list-disc list-inside text-sm text-gray-700">
+    {% for q in ai_questions.questions %}
+    <li>{{ q }}</li>
+    {% endfor %}
+  </ul>
+  {% if ai_questions.demo_lesson_brief %}
+  <p class="text-sm text-gray-700 mt-2"><span class="font-medium">Demo lesson brief:</span> {{ ai_questions.demo_lesson_brief }}</p>
+  {% endif %}
+  {% endif %}
+  <form method="post" action="/interviews/{{ interview.id }}/ai/focused-questions" class="mt-2">
+    <button class="text-sm bg-indigo-600 text-white px-3 py-1.5 rounded-md hover:bg-indigo-700">
+      {{ "Regenerate" if ai_questions else "Generate" }} interview questions (AI)
+    </button>
+  </form>
+</div>
+{% endif %}
+
 {% if interview.status.value == "completed" %}
 <div class="bg-white border border-gray-200 rounded-md p-4 text-sm mb-6">
   <p class="text-gray-600 mb-3">{{ interview.notes or "No notes recorded." }}</p>
@@ -27,7 +48,20 @@
 <form method="post" action="/interviews/{{ interview.id }}/focused" class="space-y-6 bg-white border border-gray-200 rounded-md p-6">
   <div>
     <label class="block text-sm font-medium mb-1">Notes</label>
-    <textarea name="notes" rows="4" class="w-full border border-gray-300 rounded px-3 py-2 text-sm"></textarea>
+    <textarea name="notes" id="interview-notes" rows="4" class="w-full border border-gray-300 rounded px-3 py-2 text-sm"></textarea>
+    {% if ai_enabled %}
+    <button
+      type="button"
+      hx-post="/interviews/{{ interview.id }}/ai/evidence-map"
+      hx-include="#interview-notes"
+      hx-target="#evidence-panel"
+      hx-swap="innerHTML"
+      class="mt-2 text-sm bg-indigo-600 text-white px-3 py-1.5 rounded-md hover:bg-indigo-700"
+    >
+      Suggest evidence (AI)
+    </button>
+    <div id="evidence-panel" class="mt-3 bg-indigo-50 border border-indigo-200 rounded-md p-4"></div>
+    {% endif %}
   </div>
 
   {% for item in items %}
