@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{% block title %}Rubric{% endblock %}</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://unpkg.com/htmx.org@2.0.3" integrity="sha384-BBDmZzVt6vjz5YbQqZPtFZW82o7hi/EYYDaDHCe2j/9akkra9p/10Hg1cvEIsxfD" crossorigin="anonymous"></script>
+</head>
+<body class="bg-gray-50 text-gray-900">
+  <header class="bg-white border-b border-gray-200">
+    <div class="max-w-5xl mx-auto px-4 py-3 flex items-center justify-between">
+      <div class="flex items-baseline gap-2">
+        <span class="text-lg font-semibold">Rubric</span>
+        <span class="text-sm text-gray-500">Every hire, one standard</span>
+      </div>
+      <select class="border border-gray-300 rounded px-3 py-1.5 text-sm bg-white" disabled>
+        <option>Chairman</option>
+        <option>Principal</option>
+        <option>Interviewer</option>
+        <option>HR</option>
+      </select>
+    </div>
+  </header>
+  <main class="max-w-5xl mx-auto px-4 py-8">
+    {% block content %}{% endblock %}
+  </main>
+</body>
+</html>
