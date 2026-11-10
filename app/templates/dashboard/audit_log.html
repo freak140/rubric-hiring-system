@@ -1,0 +1,59 @@
+{% extends "base.html" %}
+{% block title %}Audit log · Rubric{% endblock %}
+{% block content %}
+<h1 class="text-2xl font-bold mb-6">Audit log</h1>
+
+<form method="get" action="/audit-log" class="flex flex-wrap gap-3 mb-6 text-sm items-center">
+  <select name="opening_id" onchange="this.form.submit()" class="border border-gray-300 rounded px-3 py-1.5 bg-white">
+    <option value="">All openings</option>
+    {% for o in openings %}
+    <option value="{{ o.id }}" {% if selected_opening_id == o.id %}selected{% endif %}>{{ o.title }}</option>
+    {% endfor %}
+  </select>
+  <select name="user_id" onchange="this.form.submit()" class="border border-gray-300 rounded px-3 py-1.5 bg-white">
+    <option value="">All users</option>
+    {% for u in users %}
+    <option value="{{ u.id }}" {% if selected_user_id == u.id %}selected{% endif %}>{{ u.name }}</option>
+    {% endfor %}
+  </select>
+  <select name="action" onchange="this.form.submit()" class="border border-gray-300 rounded px-3 py-1.5 bg-white">
+    <option value="">All actions</option>
+    {% for a in actions %}
+    <option value="{{ a }}" {% if selected_action == a %}selected{% endif %}>{{ a }}</option>
+    {% endfor %}
+  </select>
+  <label class="flex items-center gap-1">
+    <input type="checkbox" name="overrides_only" value="true" onchange="this.form.submit()" {% if overrides_only %}checked{% endif %}>
+    Overrides only
+  </label>
+</form>
+
+<div class="overflow-x-auto bg-white border border-gray-200 rounded-md">
+  <table class="min-w-full text-sm">
+    <thead class="bg-gray-50">
+      <tr>
+        <th class="text-left px-3 py-2">When</th>
+        <th class="text-left px-3 py-2">Who</th>
+        <th class="text-left px-3 py-2">Action</th>
+        <th class="text-left px-3 py-2">Entity</th>
+        <th class="text-left px-3 py-2">Details</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for event in events %}
+      <tr class="border-t border-gray-100 {% if event.is_override %}bg-purple-50{% endif %}">
+        <td class="px-3 py-2 whitespace-nowrap">{{ event.created_at.strftime('%d %b %Y %H:%M') }}</td>
+        <td class="px-3 py-2">{{ event.actor.name if event.actor else "System" }}</td>
+        <td class="px-3 py-2">{{ event.action }}{% if event.is_override %} <span class="text-purple-700 font-medium">(override)</span>{% endif %}</td>
+        <td class="px-3 py-2 text-gray-500">{{ event.entity_type }} #{{ event.entity_id }}</td>
+        <td class="px-3 py-2 text-gray-500">
+          {% if event.override_reason %}{{ event.override_reason }}{% elif event.details %}{{ event.details }}{% endif %}
+        </td>
+      </tr>
+      {% else %}
+      <tr><td colspan="5" class="px-3 py-3 text-gray-400">No matching events.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}

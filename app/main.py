@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
 
-from app.routers import applications, candidates, demo, interviews, openings, pages, references, safeguarding
+from app.routers import applications, candidates, dashboard, demo, interviews, openings, pages, references, safeguarding
 
 app = FastAPI(title="Rubric")
 
@@ -14,3 +14,4 @@ app.include_router(applications.router)
 app.include_router(interviews.router)
 app.include_router(references.router)
 app.include_router(safeguarding.router)
+app.include_router(dashboard.router)

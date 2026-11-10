@@ -73,3 +73,18 @@ Decisions I made:
 - Sell plan is only offered once `Decision.outcome == hire`, since selling an offer to someone you're not hiring doesn't make sense; there's no DB gate for this (sell plan has no stage dependency in the spec), so it's purely a template-level condition.
 - The test users/openings/applications created while smoke-testing against the live Neon database were left in place rather than manually truncated — Phase 6's seed script will `TRUNCATE ... RESTART IDENTITY CASCADE` and replace them with the real seed data; deleting them now would be an unrequested destructive action against the only database available, outside of what this phase calls for.
 - Added one pytest test for the new `can_name_reference` predicate (44 total); the 12 screens themselves are routes/templates verified by the live walkthrough above, not meaningfully unit-testable in isolation without a database.
+
+## Phase 4: Chairman dashboard
+
+What I built:
+- `app/routers/dashboard.py`: `GET /dashboard` (chairman-only, 403 otherwise) with openings-by-stage counts, hires to date, average days from opening creation to the `application.advance` audit event that recorded `to_stage: hired` (not from candidate-sourced date, since the spec says "opening to hire"), an overrides table (who/when/gate bypassed/the gate's own reasons/the stated override reason), released interviewers with their reasons, and applications with no activity in 14+ days.
+- `GET /audit-log`: filterable by opening, user, action, and an "overrides only" checkbox; the opening filter resolves to the opening's own id plus every Interview/Reference/SafeguardingCheck id under its applications, since `AuditEvent` is polymorphic (`entity_type` + `entity_id`) with no FK.
+- "Last activity" for the stale-applications check is `max()` over each child row's own `updated_at` (interviews, references, safeguarding checks, decision, sell plan) plus the application's own — simpler and just as accurate as re-deriving it from the audit log, since every mutation already touches a row's `updated_at` via the `TimestampMixin`.
+
+Problems I hit and how I fixed them:
+- First version of the opening filter on `/audit-log` crashed with `AttributeError: 'int' object has no attribute 'id'` — `db.scalars(select(Application.id).where(...))` already yields plain ints (selecting a single column, not the ORM object), so `{a.id for a in ...}` was wrong; fixed to `set(db.scalars(...))`. Caught by the live walkthrough, not a unit test, since this phase is routes/queries over real data like Phase 3.
+- Also found and killed two stray `uvicorn` processes left over from the very first setup session (still listening on port 8000) and a runaway interactive Anaconda Python REPL spawned by my own empty-heredoc typo in a shell command — none were related to the app itself, just session hygiene.
+
+Decisions I made:
+- No new pytest tests: everything new here is either a template-rendered aggregation query (verified live, same reasoning as Phase 3) or reuses existing permission predicates (`can_view_dashboard`/`can_view_audit_log`, already covered in `test_permissions.py`).
+- Average days to hire is computed from `RoleOpening.created_at`, exactly as the spec's phrase reads ("average days from opening to hire"), even though in a real school the opening might sit in `draft` for a while before going `open` — out of scope to track an explicit "opened_at" timestamp when the spec didn't ask for one.

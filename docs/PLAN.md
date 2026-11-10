@@ -42,10 +42,10 @@ Re-read this file and CLAUDE.md whenever resuming work or recovering from lost c
 - [x] Tests, smoke test, commit "Phase 3: ..."
 
 ## Phase 4: Chairman dashboard
-- [ ] Openings + stage counts, hires to date, avg days to hire
-- [ ] Compliance panel: overrides, released interviewers, stale applications (14+ days)
-- [ ] Audit log page with filters
-- [ ] Tests, smoke test, commit "Phase 4: ..."
+- [x] Openings + stage counts, hires to date, avg days to hire
+- [x] Compliance panel: overrides, released interviewers, stale applications (14+ days)
+- [x] Audit log page with filters
+- [x] Tests, smoke test, commit "Phase 4: ..."
 
 ## Phase 5: AI assistance
 - [ ] app/services/ai/client.py: Groq -> Gemini fallback, retry/backoff, JSON validation retry, clear failure error
