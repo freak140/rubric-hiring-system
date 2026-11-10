@@ -14,12 +14,27 @@
         <span class="text-lg font-semibold">Rubric</span>
         <span class="text-sm text-gray-500">Every hire, one standard</span>
       </div>
-      <select class="border border-gray-300 rounded px-3 py-1.5 text-sm bg-white" disabled>
-        <option>Chairman</option>
-        <option>Principal</option>
-        <option>Interviewer</option>
-        <option>HR</option>
-      </select>
+      <div class="flex items-center gap-3">
+        <span class="text-xs font-medium text-amber-700 bg-amber-100 border border-amber-200 rounded-full px-2.5 py-1">
+          Demo mode: no real logins
+        </span>
+        {% if current_user %}
+        <form method="post" action="/demo/switch-user">
+          <select
+            name="user_id"
+            onchange="this.form.submit()"
+            class="border border-gray-300 rounded px-3 py-1.5 text-sm bg-white"
+          >
+            {% for u in all_users %}
+            <option value="{{ u.id }}" {% if u.id == current_user.id %}selected{% endif %}>
+              {{ u.name }} ({{ "HR" if u.app_role.value == "hr" else u.app_role.value | replace('_', ' ') | title }})
+            </option>
+            {% endfor %}
+          </select>
+          <noscript><button type="submit" class="text-sm underline ml-1">Switch</button></noscript>
+        </form>
+        {% endif %}
+      </div>
     </div>
   </header>
   <main class="max-w-5xl mx-auto px-4 py-8">

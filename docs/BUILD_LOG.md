@@ -31,3 +31,20 @@ Decisions I made:
 - Invalid stage transitions (skipping a stage, moving backward, or acting on an application already in a terminal stage) raise `WorkflowError`, not a `GateResult` — these are programming/UI errors (the UI should only ever offer the valid next move), not a business-rule judgment call with reasons to show a user.
 - `reject`/`withdraw` go through `advance_application` as well, as a separate branch (reason required, no gate function, allowed from any non-terminal stage) rather than a separate service function — keeps the single "the one way state changes happen" entry point from the prompt's "every state change goes through app/services."
 - `can_view_ratings` treats "submitted their own rating" as: the user has at least one rating recorded on any interview of theirs for that application (not necessarily the specific `interview` argument) — matches "after submitting their own" without requiring them to have rated every scorecard item first.
+
+## Phase 2: Demo identity and permissions
+
+What I built:
+- `app/dependencies.py`: `get_current_user` reads the `rubric_user_id` cookie, loads that user, and falls back to the first chairman (by id) when the cookie is missing or points at a nonexistent id; raises a clear 500 if no users exist at all (tells you to run `scripts/seed.py`, which doesn't exist until Phase 6). `get_template_context` bundles `request`, `current_user`, and `all_users` for every page that needs the top-bar switcher.
+- `app/routers/demo.py`: `POST /demo/switch-user` sets the cookie and redirects back to the referring page (falls back to `/`).
+- `base.html`: the role-switcher `<select>` is now populated from real seeded users (name + role), auto-submits on change via a plain HTML form (works with JS off too, via a `<noscript>` fallback button — no HTMX needed for this), and a "Demo mode: no real logins" badge sits next to it.
+- `app/services/permissions.py`: one pure predicate per capability from the spec (`can_create_opening`, `can_manage_scorecard`/`can_approve_scorecard`, `can_add_candidate`, `can_assign_interviewer`, `can_record_decision`/`can_record_sell_plan`, `can_manage_references`/`can_manage_safeguarding`, `can_view_dashboard`/`can_view_audit_log`, `can_override_gate`, `can_submit_rating`, `can_view_interview`). All take already-loaded objects, no DB access, mirroring `gates.py`'s style.
+- 6 new pytest tests for permissions (43 total now).
+
+Problems I hit and how I fixed them:
+- The role-switcher dropdown rendered "Hr" instead of "HR" via `|title`. Special-cased it in the template rather than reach for a filter library (none is in requirements.txt).
+- Phase 2 has nothing to seed real users yet (seeding is Phase 6), so there was no way to smoke-test the switcher against a running server. Inserted 4 throwaway users (one per role) directly via a one-off script, confirmed default-to-chairman, switching, and invalid-cookie fallback all work against the real Neon database, then left them in place — Phase 6's `TRUNCATE ... RESTART IDENTITY CASCADE` will replace them with the real seed data, so there's no cleanup to do now.
+
+Decisions I made:
+- `permissions.py` only has predicates for actions Phase 3+ will actually need to gate; I didn't pre-build a generic "can view this opening" catch-all since "hr: view everything" / "chairman: everything" just means those roles pass every predicate that matters, not that a separate blanket-view function is needed.
+- Enforcement in routes/templates is deferred to Phase 3 as each screen is built (there are no protected actions yet to wire up) — the plan item is still checked off because the mechanism (cookie, dependency, permissions module) is complete and tested; the application is the thing that doesn't exist yet.

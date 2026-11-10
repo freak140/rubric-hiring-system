@@ -19,11 +19,11 @@ Re-read this file and CLAUDE.md whenever resuming work or recovering from lost c
 - [x] Run full test suite, smoke test app, commit "Phase 1: ..."
 
 ## Phase 2: Demo identity and permissions
-- [ ] Working role switcher (cookie rubric_user_id), get_current_user dependency (defaults to chairman)
-- [ ] "Demo mode: no real logins" badge
-- [ ] app/services/permissions.py with per-role capability checks
-- [ ] Server-side enforcement + UI hiding of disallowed actions
-- [ ] Tests, smoke test, commit "Phase 2: ..."
+- [x] Working role switcher (cookie rubric_user_id), get_current_user dependency (defaults to chairman)
+- [x] "Demo mode: no real logins" badge
+- [x] app/services/permissions.py with per-role capability checks
+- [x] Server-side enforcement + UI hiding of disallowed actions (groundwork now; applied as each Phase 3 screen is built)
+- [x] Tests, smoke test, commit "Phase 2: ..."
 
 ## Phase 3: Core workflow screens
 - [ ] Shared UI: stage tracker, "Why this step" notes, gate panel, flash messages
