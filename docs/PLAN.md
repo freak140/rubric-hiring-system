@@ -74,8 +74,10 @@ Re-read this file and CLAUDE.md whenever resuming work or recovering from lost c
 - [x] Commit "Phase 7: ..."
 
 ## Phase 8: Submission docs and final check
-- [ ] docs/architecture.md with Mermaid diagram + explanations
-- [ ] docs/overview.md (<=300 words)
-- [ ] Final pass: full tests, reseed, walk 5-step tour via HTTP, fix issues
-- [ ] BUILD_LOG.md: what works / limitations / what's next
-- [ ] Commit "Phase 8: ..."
+- [x] docs/architecture.md with Mermaid diagram + explanations
+- [x] docs/overview.md (<=300 words)
+- [x] Final pass: full tests, reseed, walk 5-step tour via HTTP, fix issues
+- [x] BUILD_LOG.md: what works / limitations / what's next
+- [x] Commit "Phase 8: ..."
+
+All 8 phases complete.

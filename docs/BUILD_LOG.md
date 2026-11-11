@@ -150,3 +150,49 @@ Problems I hit and how I fixed them:
 Decisions I made:
 - The repository is not actually deployed to Render as part of this submission (the prompt says "do not deploy"); `render.yaml` and the README's deployment section describe exactly how to, but I did not create a Render account or service.
 - Did not add a `/demo/reset` warning to the README's deployment section beyond what's already on the confirmation page itself -- the route is already chairman-gated and requires an explicit `confirm=yes`, so the in-app safeguard is the right place for that warning, not a doc a deployer may not read.
+
+## Phase 8: Submission docs and final check
+
+What I built:
+- `docs/architecture.md`: a Mermaid component diagram (browser; FastAPI routes; the six `app/services` modules; Postgres on Neon; Groq; Gemini; Render) with a paragraph per component.
+- `docs/overview.md`: a 299-word summary covering the problem, who it's for, what was built, why (enforced gates, human-only judgement, AI as assistant, fail-soft AI, zero default AI cost), and the stated assumptions (single school, no real auth, no concurrent-edit handling).
+- Final pass: full `pytest` run (52 passed), `alembic current` confirmed at head with no pending migrations, a full reseed, and a live walkthrough of all 5 demo-tour steps over real HTTP against the running app and the real Neon database -- not just a read-through of the templates.
+
+Problems I hit and how I fixed them:
+- The walkthrough's first attempt used `/tmp/<name>` paths for curl's cookie jar (`-b`/`-c`) across several separate shell tool calls. This Git Bash environment doesn't persist exported shell state between tool calls, and in at least one call a `/tmp/...` path for `-c`/`-b` silently wrote to or read from the wrong location (no curl error, just an empty/missing cookie jar) -- step 1 of the tour looked like it passed only because the gate-panel text it checked for doesn't depend on which user is viewing, masking that the role switch had silently not taken effect. Fixed by redoing the walkthrough in a single shell call with a cookie jar at a plain relative filename (no leading slash) in the project directory, which is reliable; confirmed step 2 (submitting a rating) failed with 403 under the broken cookie jar and succeeded once the jar actually worked. This is a testing-harness lesson, not an application bug -- worth recording since it could otherwise read as "the demo tour doesn't work" when the app was fine throughout.
+- No other bugs surfaced in this pass; the real bugs (the cascade-on-construct session issue, the gate-vs-demo-lesson-ratings mismatch, the reset-route self-deadlock) were all caught and fixed in their respective phases.
+
+Decisions I made:
+- Treated this phase's "final check" as a genuine end-to-end re-verification rather than a formality, specifically because several real bugs in this project were only ever found by driving the running app over HTTP, never by the unit tests alone (which are intentionally narrow -- pure functions and a mocked AI client). Unit tests passing was never treated as sufficient evidence that a phase's routes/templates/scripts actually worked.
+
+## Final status
+
+**What works:** The full Who-method pipeline end to end -- scorecard authoring and approval,
+candidate intake with email dedupe, every stage gate (sourced through hired, plus reject/withdraw
+from any active stage), a chairman-only override with a mandatory reason that's permanently
+audited, interviewer assignment and all four interview-type forms, a ratings matrix whose
+visibility rule is enforced exactly as specified, named references and safeguarding checks,
+decisions and sell plans, a printable decision record with a full audit trail, a chairman
+dashboard with compliance reporting and a filterable audit log, four AI-assisted drafting features
+(all live-tested against real Groq/Gemini traffic, not just mocks) that are fully inert with
+`AI_ENABLED=false`, an idempotent seed script covering every scenario the spec names, a one-click
+demo-reset flow, and a guided home-page tour -- all 52 pytest tests pass, and every phase was
+smoke-tested against the real Neon database, not just imported successfully.
+
+**Known limitations:**
+- No real authentication -- the role switcher is explicitly a demo stand-in, not a security boundary.
+- No concurrency handling: two people editing the same scorecard or interview at once will silently overwrite each other (last write wins); fine for a single school's small hiring team, not for a larger deployment.
+- The decision record and audit log have no pagination; both would need it well before thousands of events accumulate.
+- `OpeningStatus` (draft/open/filled/closed) is informational only -- no gate depends on it, so nothing stops sourcing candidates against a `draft` opening.
+- Reorder-by-swap on the scorecard editor only swaps adjacent positions one step at a time; fine for the handful of items a real scorecard has, tedious for a much longer list.
+- The AI evidence-mapping eval script's precision/recall numbers are only as good as 3 hand-labelled samples -- illustrative, not a rigorous benchmark.
+- Render deployment was prepared (`render.yaml`, README steps) but not actually performed, per the prompt's "do not deploy."
+
+**What I'd do with more time:**
+- Real authentication (even a simple email-link or password flow) and per-user sessions instead of a cookie-selected demo identity.
+- Optimistic locking (an `updated_at` check on write) on the handful of records multiple roles can edit, so a stale save fails loudly instead of silently overwriting.
+- Pagination and date-range filtering on the audit log and decision record once event volume justifies it.
+- A gate tying `OpeningStatus` to whether candidates can be sourced against it, and a small state machine for opening status transitions instead of a free-choice dropdown.
+- Drag-and-drop (or at least multi-step) reordering for scorecard items.
+- A larger, blind-labelled evaluation set for the evidence-mapping feature, run across both providers, to actually compare Groq vs. Gemini quality rather than just confirming both work.
+- Email notifications (an interviewer assigned, a reference completed, a decision recorded) -- explicitly out of scope here but the natural next feature for a real deployment.
