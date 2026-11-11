@@ -68,10 +68,10 @@ Re-read this file and CLAUDE.md whenever resuming work or recovering from lost c
 - [x] Tests, smoke test, commit "Phase 6: ..."
 
 ## Phase 7: Deployment prep (no deploy)
-- [ ] render.yaml (web service, singapore, free, build/start commands, health check, env vars sync:false)
-- [ ] Confirm postgresql+psycopg:// + sslmode=require works
-- [ ] README: setup, tests, seeding, Render deploy steps, env var table
-- [ ] Commit "Phase 7: ..."
+- [x] render.yaml (web service, singapore, free, build/start commands, health check, env vars sync:false)
+- [x] Confirm postgresql+psycopg:// + sslmode=require works
+- [x] README: setup, tests, seeding, Render deploy steps, env var table
+- [x] Commit "Phase 7: ..."
 
 ## Phase 8: Submission docs and final check
 - [ ] docs/architecture.md with Mermaid diagram + explanations

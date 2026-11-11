@@ -136,3 +136,17 @@ Decisions I made:
 - Chose to drive almost all seed data through the real `advance_application`/`approve_scorecard` service functions rather than setting `application.stage` directly, even though it's more code and found the two bugs above. This was a deliberate trade: slower to write, but the seed data is now provably gate-consistent (if a future code change breaks a gate, the seed script breaks too, loudly), and the audit trail it produces is byte-for-byte what the real app would have produced for that sequence of actions -- valuable for a dashboard/audit-log demo.
 - Only one of the four pre-generated `AIOutput` rows (focused questions for the Maths opening) is actually reachable via a live button click in the seeded end-state, since the other three correspond to interviews/decisions that are already `completed`/decided (and those AI buttons correctly hide once an interview is completed or an application has moved past `decision`). This is fine and expected: two of the four Maths candidates are deliberately left *complete* (hired) or *blocked* rather than mid-interview, and the AI scorecard-drafting step of the tour is explicitly about a *new* opening the visitor creates themselves, whose input can't be known at seed time. The rows still serve their purpose -- demonstrating the cache format and giving the audit log real `ai.*` entries to show.
 - The demo tour's reference to resetting data links straight to `/demo/reset` from the home page text rather than gating it behind a nav item, since it's a rare, destructive, chairman-only escape hatch rather than a primary workflow action.
+
+## Phase 7: Deployment prep
+
+What I built:
+- `render.yaml`: one free-tier Python web service in `singapore`, build `pip install -r requirements.txt`, start `alembic upgrade head && uvicorn app.main:app --host 0.0.0.0 --port $PORT`, health check `/health`, and every env var the app reads (`DATABASE_URL`, `GROQ_API_KEY`, `GEMINI_API_KEY` as `sync: false` secrets Render prompts for; `AI_ENABLED`, `GROQ_MODEL`, `GEMINI_MODEL` with sane defaults baked in).
+- README rewritten: local setup now includes migrate + seed steps (not just "run the app"), a dedicated "Database connection" section spelling out the `+psycopg` scheme and `sslmode=require` requirement (this exact mistake bit the very first session of this project, on the stock Neon-dashboard connection string -- worth documenting explicitly so it doesn't happen to the next person), a full env var table, and a numbered Render deployment walkthrough.
+- Fixed a last leftover from before the app was renamed: `app/config.py`'s and `.env.example`'s default `DATABASE_URL` still pointed at a database named `a_method_hiring` (the original pre-rename project name) -- changed both to `rubric`.
+
+Problems I hit and how I fixed them:
+- None specific to this phase -- it's documentation and a static config file, validated by parsing `render.yaml` as YAML and re-running the full test suite plus a clean server smoke test.
+
+Decisions I made:
+- The repository is not actually deployed to Render as part of this submission (the prompt says "do not deploy"); `render.yaml` and the README's deployment section describe exactly how to, but I did not create a Render account or service.
+- Did not add a `/demo/reset` warning to the README's deployment section beyond what's already on the confirmation page itself -- the route is already chairman-gated and requires an explicit `confirm=yes`, so the in-app safeguard is the right place for that warning, not a doc a deployer may not read.

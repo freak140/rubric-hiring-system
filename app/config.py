@@ -4,7 +4,7 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 class Settings(BaseSettings):
     model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8", extra="ignore")
 
-    DATABASE_URL: str = "postgresql+psycopg://postgres:postgres@localhost:5432/a_method_hiring"
+    DATABASE_URL: str = "postgresql+psycopg://postgres:postgres@localhost:5432/rubric"
 
     # AI is off by default; the app must be fully usable without it.
     AI_ENABLED: bool = False
