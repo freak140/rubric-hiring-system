@@ -1,10 +1,15 @@
 """AI-assisted drafting features. Every result here is a draft a human reviews
 before it has any effect -- these functions never write to application data,
 they only return drafted content for a route to show or apply.
+
+Each feature exposes its input-dict builder (_*_input) so other code --
+notably scripts/seed.py, which inserts pre-generated AIOutput rows -- can
+compute the exact same cache key without duplicating the shape by hand.
 """
 
 from sqlalchemy.orm import Session
 
+from app.models.applications import Application
 from app.models.openings import RoleOpening
 from app.models.scorecards import ScorecardItem
 from app.services.ai import prompts
@@ -12,13 +17,39 @@ from app.services.ai.client import AICallResult, call_llm_cached, peek_cache
 from app.services.ai.schemas import DecisionSummary, EvidenceMapping, FocusedQuestions, ScorecardDraft
 
 
-def draft_scorecard(db: Session, opening: RoleOpening, brief: str) -> AICallResult:
-    input_data = {
+def rated_interviews_for(application: Application) -> list:
+    """The application's focused/demo-lesson interviews -- the ones that carry ratings."""
+    return [i for i in application.interviews if i.interview_type.value in ("focused", "demo_lesson")]
+
+
+def ratings_text_for(application: Application) -> str:
+    lines = []
+    for interview in rated_interviews_for(application):
+        for rating in interview.ratings:
+            lines.append(f"{rating.scorecard_item.title}: grade {rating.grade.value} -- {rating.evidence}")
+    return "\n".join(lines) or "No ratings recorded yet."
+
+
+def references_text_for(application: Application) -> str:
+    lines = [
+        f"{r.referee_name} ({r.referee_relationship.value}): {r.notes}"
+        for r in application.references
+        if r.status.value == "completed" and r.notes
+    ]
+    return "\n".join(lines) or "No completed references yet."
+
+
+def _scorecard_draft_input(opening: RoleOpening, brief: str) -> dict:
+    return {
         "title": opening.title,
         "role_type": opening.role_type.value,
         "department": opening.department,
         "brief": brief,
     }
+
+
+def draft_scorecard(db: Session, opening: RoleOpening, brief: str) -> AICallResult:
+    input_data = _scorecard_draft_input(opening, brief)
     return call_llm_cached(
         db,
         task="scorecard_draft",
@@ -58,16 +89,20 @@ def _verified_quotes(quotes: list[str], notes: str) -> list[str]:
     return [q for q in quotes if q and q in notes]
 
 
-def map_evidence(db: Session, notes: str, scorecard_items: list[ScorecardItem]) -> AICallResult:
+def _evidence_map_input(notes: str, scorecard_items: list[ScorecardItem]) -> dict:
     items_payload = [{"title": i.title, "description": i.description} for i in scorecard_items]
-    input_data = {"notes": notes, "items": items_payload}
+    return {"notes": notes, "items": items_payload}
+
+
+def map_evidence(db: Session, notes: str, scorecard_items: list[ScorecardItem]) -> AICallResult:
+    input_data = _evidence_map_input(notes, scorecard_items)
     result = call_llm_cached(
         db,
         task="evidence_map",
         input_data=input_data,
         prompt_version=prompts.EVIDENCE_MAPPING_PROMPT_VERSION,
         system_prompt=prompts.EVIDENCE_MAPPING_SYSTEM_PROMPT,
-        user_prompt=prompts.evidence_mapping_user_prompt(notes, items_payload),
+        user_prompt=prompts.evidence_mapping_user_prompt(notes, input_data["items"]),
         schema=EvidenceMapping,
     )
     mapping: EvidenceMapping = result.output
@@ -76,8 +111,12 @@ def map_evidence(db: Session, notes: str, scorecard_items: list[ScorecardItem]) 
     return result
 
 
+def _decision_summary_input(ratings_text: str, references_text: str) -> dict:
+    return {"ratings_text": ratings_text, "references_text": references_text}
+
+
 def summarize_decision(db: Session, ratings_text: str, references_text: str) -> AICallResult:
-    input_data = {"ratings_text": ratings_text, "references_text": references_text}
+    input_data = _decision_summary_input(ratings_text, references_text)
     return call_llm_cached(
         db,
         task="decision_summary",
@@ -90,5 +129,5 @@ def summarize_decision(db: Session, ratings_text: str, references_text: str) -> 
 
 
 def peek_decision_summary(db: Session, ratings_text: str, references_text: str) -> DecisionSummary | None:
-    input_data = {"ratings_text": ratings_text, "references_text": references_text}
+    input_data = _decision_summary_input(ratings_text, references_text)
     return peek_cache(db, "decision_summary", input_data, prompts.DECISION_SUMMARY_PROMPT_VERSION, DecisionSummary)

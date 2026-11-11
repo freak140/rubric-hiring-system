@@ -61,11 +61,11 @@ Re-read this file and CLAUDE.md whenever resuming work or recovering from lost c
 - [x] Tests, smoke test, commit "Phase 5: ..."
 
 ## Phase 6: Demo data, reset and demo guide
-- [ ] scripts/seed.py: idempotent TRUNCATE + realistic seed (users, 3 openings, 4+ candidates per spec)
-- [ ] Pre-generated AIOutput rows for seeded AI features (no live calls)
-- [ ] POST /demo/reset with confirmation step
-- [ ] Home page becomes demo guide with 5-step tour + direct links
-- [ ] Tests, smoke test, commit "Phase 6: ..."
+- [x] scripts/seed.py: idempotent TRUNCATE + realistic seed (users, 3 openings, 4+ candidates per spec)
+- [x] Pre-generated AIOutput rows for seeded AI features (no live calls)
+- [x] POST /demo/reset with confirmation step
+- [x] Home page becomes demo guide with 5-step tour + direct links
+- [x] Tests, smoke test, commit "Phase 6: ..."
 
 ## Phase 7: Deployment prep (no deploy)
 - [ ] render.yaml (web service, singapore, free, build/start commands, health check, env vars sync:false)

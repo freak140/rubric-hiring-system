@@ -106,14 +106,14 @@ def call_llm(system_prompt: str, user_prompt: str, schema: type[BaseModel]) -> t
     raise AIUnavailableError("AI is unavailable right now. Please continue manually.") from last_error
 
 
-def _input_hash(input_data: dict) -> str:
+def compute_input_hash(input_data: dict) -> str:
     normalized = json.dumps(input_data, sort_keys=True, default=str)
     return hashlib.sha256(normalized.encode("utf-8")).hexdigest()
 
 
 def peek_cache(db: Session, task: str, input_data: dict, prompt_version: str, schema: type[BaseModel]) -> BaseModel | None:
     """Read-only cache lookup for display purposes. Never calls the LLM."""
-    input_hash = _input_hash({**input_data, "prompt_version": prompt_version})
+    input_hash = compute_input_hash({**input_data, "prompt_version": prompt_version})
     cached = db.query(AIOutput).filter(AIOutput.task == task, AIOutput.input_hash == input_hash).first()
     return schema.model_validate(cached.output) if cached is not None else None
 
@@ -128,7 +128,7 @@ def call_llm_cached(
     schema: type[BaseModel],
 ) -> AICallResult:
     """Looks up a cached AIOutput by (task, sha256(normalised input)) before calling the LLM."""
-    input_hash = _input_hash({**input_data, "prompt_version": prompt_version})
+    input_hash = compute_input_hash({**input_data, "prompt_version": prompt_version})
 
     cached = db.query(AIOutput).filter(AIOutput.task == task, AIOutput.input_hash == input_hash).first()
     if cached is not None:
