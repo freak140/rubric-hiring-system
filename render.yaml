@@ -10,8 +10,10 @@ services:
     envVars:
       - key: DATABASE_URL
         sync: false
+      - key: SECRET_KEY
+        generateValue: true
       - key: AI_ENABLED
-        value: "false"
+        value: "true"
       - key: GROQ_API_KEY
         sync: false
       - key: GROQ_MODEL
