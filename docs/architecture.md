@@ -5,7 +5,7 @@ graph TD
     Browser["Browser<br/>Jinja2 + Tailwind (CDN) + HTMX"]
 
     subgraph App["FastAPI app (one deployable service)"]
-        Routes["Routes<br/>pages, openings, candidates, applications,<br/>interviews, references, safeguarding,<br/>dashboard, demo"]
+        Routes["Routes<br/>pages (landing/home), auth (login/logout),<br/>openings, candidates, applications,<br/>interviews, references, safeguarding,<br/>dashboard, demo"]
 
         subgraph Services["app/services (no FastAPI imports)"]
             Permissions["permissions.py<br/>who can do what"]
@@ -13,6 +13,7 @@ graph TD
             Workflow["workflow.py<br/>advance_application, release,<br/>approve_scorecard"]
             Audit["audit.py<br/>append-only log_event"]
             Visibility["visibility.py<br/>ratings-matrix visibility"]
+            Auth["auth.py<br/>password hashing,<br/>session signing"]
             AI["services/ai/<br/>client, prompts, schemas, features"]
         end
     end
@@ -27,6 +28,7 @@ graph TD
     Routes --> Gates
     Routes --> Workflow
     Routes --> Visibility
+    Routes --> Auth
     Routes --> AI
     Workflow --> Gates
     Workflow --> Audit
@@ -72,6 +74,11 @@ update or delete -- the audit trail is append-only by construction, not by conve
 **`visibility.py`.** `can_view_ratings(user, interview)`: chairman/HR/the opening's hiring manager
 always see the ratings matrix; an interviewer only sees others' ratings once they've submitted
 their own.
+
+**`auth.py`.** Backs two ways to become "the current user": demo mode (the free role switcher,
+no password) and normal mode (a real `/login`). PBKDF2-HMAC-SHA256 password hashing and HMAC
+session-cookie signing, stdlib only -- no new dependency for this. A valid session cookie always
+wins over the demo cookie; `permissions.py` enforces the same rules in both modes.
 
 **`services/ai/`.** `client.py` calls an OpenAI-compatible endpoint, trying Groq then Gemini, with
 retry-then-fallback on rate limits/5xx and a validation-retry on malformed JSON; `call_llm_cached`

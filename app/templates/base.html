@@ -5,30 +5,36 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>{% block title %}Rubric{% endblock %}</title>
   <script src="https://cdn.tailwindcss.com"></script>
-  <script src="https://unpkg.com/htmx.org@2.0.3" integrity="sha384-BBDmZzVt6vjz5YbQqZPtFZW82o7hi/EYYDaDHCe2j/9akkra9p/10Hg1cvEIsxfD" crossorigin="anonymous"></script>
+  <script src="https://unpkg.com/htmx.org@2.0.3" integrity="sha384-0895/pl2MU10Hqc6jd4RvrthNlDiE9U1tWmX7WRESftEDRosgxNsQG/Ze9YMRzHq" crossorigin="anonymous"></script>
+  <link rel="stylesheet" href="/static/css/app.css">
 </head>
-<body class="bg-gray-50 text-gray-900">
-  <header class="bg-white border-b border-gray-200">
+<body class="antialiased bg-gray-50 text-gray-900">
+  <header class="sticky top-0 z-10 bg-white/95 backdrop-blur border-b border-gray-200 shadow-sm">
     <div class="max-w-6xl mx-auto px-4 py-3 flex flex-wrap items-center justify-between gap-3">
-      <div class="flex items-baseline gap-4">
-        <a href="/" class="flex items-baseline gap-2">
-          <span class="text-lg font-semibold">Rubric</span>
+      <div class="flex items-baseline gap-5">
+        <a href="/" class="flex items-center gap-2">
+          <span class="w-6 h-6 rounded-md bg-indigo-600 text-white text-xs font-bold flex items-center justify-center">R</span>
+          <span class="text-lg font-semibold tracking-tight">Rubric</span>
           <span class="text-sm text-gray-500 hidden sm:inline">Every hire, one standard</span>
         </a>
         {% if current_user %}
-        <nav class="flex items-center gap-3 text-sm text-gray-700">
-          <a href="/openings" class="hover:underline">Openings</a>
-          {% if current_user.app_role.value == "interviewer" %}
-          <a href="/my-interviews" class="hover:underline">My interviews</a>
+        <nav class="flex items-center gap-4 text-sm font-medium text-gray-600">
+          {% if current_user.app_role.value != "interviewer" %}
+          <a href="/openings" class="hover:text-indigo-700">Openings</a>
+          {% else %}
+          <a href="/my-interviews" class="hover:text-indigo-700">My interviews</a>
+          {% endif %}
+          {% if current_user.app_role.value in ("chairman", "principal") %}
+          <a href="/dashboard" class="hover:text-indigo-700">Dashboard</a>
           {% endif %}
           {% if current_user.app_role.value == "chairman" %}
-          <a href="/dashboard" class="hover:underline">Dashboard</a>
-          <a href="/audit-log" class="hover:underline">Audit log</a>
+          <a href="/audit-log" class="hover:text-indigo-700">Audit log</a>
           {% endif %}
         </nav>
         {% endif %}
       </div>
       <div class="flex items-center gap-3">
+        {% if is_demo %}
         <span class="text-xs font-medium text-amber-700 bg-amber-100 border border-amber-200 rounded-full px-2.5 py-1">
           Demo mode: no real logins
         </span>
@@ -37,7 +43,7 @@
           <select
             name="user_id"
             onchange="this.form.submit()"
-            class="border border-gray-300 rounded px-3 py-1.5 text-sm bg-white"
+            class="border border-gray-300 rounded-lg px-3 py-1.5 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
           >
             {% for u in all_users %}
             <option value="{{ u.id }}" {% if u.id == current_user.id %}selected{% endif %}>
@@ -48,13 +54,23 @@
           <noscript><button type="submit" class="text-sm underline ml-1">Switch</button></noscript>
         </form>
         {% endif %}
+        <a href="/login" class="text-sm text-gray-500 hover:text-indigo-700">Log in</a>
+        {% else %}
+        <span class="text-sm text-gray-600">
+          Signed in as <span class="font-medium text-gray-900">{{ current_user.name }}</span>
+          <span class="text-gray-400">({{ "HR" if current_user.app_role.value == "hr" else current_user.app_role.value | replace('_', ' ') | title }})</span>
+        </span>
+        <form method="post" action="/logout">
+          <button type="submit" class="text-sm text-gray-500 hover:text-red-600">Log out</button>
+        </form>
+        {% endif %}
       </div>
     </div>
   </header>
   <main class="max-w-6xl mx-auto px-4 py-8">
     {% if flash %}
     <div
-      class="mb-6 rounded-md border px-4 py-3 text-sm {{ 'bg-green-50 border-green-200 text-green-800' if flash.level == 'success' else 'bg-red-50 border-red-200 text-red-800' }}"
+      class="mb-6 rounded-lg border-l-4 shadow-sm px-4 py-3 text-sm {{ 'bg-green-50 border-green-500 text-green-800' if flash.level == 'success' else 'bg-red-50 border-red-500 text-red-800' }}"
     >
       {{ flash.message }}
     </div>

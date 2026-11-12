@@ -65,6 +65,23 @@ for the one-page pitch.
    the seeded demo. A chairman can also reset the demo data from there at
    any time (`/demo/reset`).
 
+### Demo mode vs. normal mode
+
+Rubric has two ways to become "the current user":
+
+- **Demo mode** (the default): the top-bar role switcher freely impersonates
+  any seeded user, no password needed. This is what the home page's tour
+  uses, and what most reviewers will want for exploring the app quickly.
+- **Normal mode**: a real `/login` with email + password. Every seeded user
+  shares the same demo password, **`rubric-demo`** (printed again each time
+  `scripts/seed.py` runs); try e.g. `sunita.iyer@rubric.school` (principal) or
+  `rohan.kapoor@rubric.school` (interviewer). Logging in replaces the role
+  switcher with your own name and a "Log out" button, drops you straight on
+  your own panel (dashboard / my-interviews / openings, depending on role),
+  and every permission check (what you can see, what you can act on) is
+  enforced exactly as it is in demo mode -- normal mode doesn't add any new
+  rules, it just removes the ability to freely become someone else.
+
 ## Running tests
 
 ```
@@ -99,6 +116,7 @@ DATABASE_URL=postgresql+psycopg://<user>:<password>@<host>/<database>?sslmode=re
 | Variable | Required | Default | Notes |
 |---|---|---|---|
 | `DATABASE_URL` | yes | — | Must use `postgresql+psycopg://`; see above. |
+| `SECRET_KEY` | no | a dev-only placeholder | Signs the normal-mode login session cookie. Set a real random value (`python -c "import secrets; print(secrets.token_hex(32))"`) in any shared or deployed environment. |
 | `AI_ENABLED` | no | `false` | The app is fully usable with this `false`; AI buttons simply don't appear. |
 | `GROQ_API_KEY` | no (unless AI enabled) | — | Omit to skip Groq and fall through to Gemini. |
 | `GROQ_MODEL` | no | `openai/gpt-oss-20b` | Any current Groq chat model that supports JSON mode. |
