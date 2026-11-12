@@ -48,7 +48,7 @@ def _scorecard_draft_input(opening: RoleOpening, brief: str) -> dict:
     }
 
 
-def draft_scorecard(db: Session, opening: RoleOpening, brief: str) -> AICallResult:
+def draft_scorecard(db: Session, opening: RoleOpening, brief: str, force: bool = False) -> AICallResult:
     input_data = _scorecard_draft_input(opening, brief)
     return call_llm_cached(
         db,
@@ -58,6 +58,7 @@ def draft_scorecard(db: Session, opening: RoleOpening, brief: str) -> AICallResu
         system_prompt=prompts.SCORECARD_DRAFT_SYSTEM_PROMPT,
         user_prompt=prompts.scorecard_draft_user_prompt(opening.title, opening.role_type.value, opening.department, brief),
         schema=ScorecardDraft,
+        force=force,
     )
 
 
@@ -66,7 +67,9 @@ def _focused_questions_input(scorecard_items: list[ScorecardItem], is_teaching: 
     return {"items": items_payload, "is_teaching": is_teaching}
 
 
-def generate_focused_questions(db: Session, scorecard_items: list[ScorecardItem], is_teaching: bool) -> AICallResult:
+def generate_focused_questions(
+    db: Session, scorecard_items: list[ScorecardItem], is_teaching: bool, force: bool = False
+) -> AICallResult:
     input_data = _focused_questions_input(scorecard_items, is_teaching)
     return call_llm_cached(
         db,
@@ -76,6 +79,7 @@ def generate_focused_questions(db: Session, scorecard_items: list[ScorecardItem]
         system_prompt=prompts.FOCUSED_QUESTIONS_SYSTEM_PROMPT,
         user_prompt=prompts.focused_questions_user_prompt(input_data["items"], is_teaching),
         schema=FocusedQuestions,
+        force=force,
     )
 
 
@@ -115,7 +119,7 @@ def _decision_summary_input(ratings_text: str, references_text: str) -> dict:
     return {"ratings_text": ratings_text, "references_text": references_text}
 
 
-def summarize_decision(db: Session, ratings_text: str, references_text: str) -> AICallResult:
+def summarize_decision(db: Session, ratings_text: str, references_text: str, force: bool = False) -> AICallResult:
     input_data = _decision_summary_input(ratings_text, references_text)
     return call_llm_cached(
         db,
@@ -125,6 +129,7 @@ def summarize_decision(db: Session, ratings_text: str, references_text: str) -> 
         system_prompt=prompts.DECISION_SUMMARY_SYSTEM_PROMPT,
         user_prompt=prompts.decision_summary_user_prompt(ratings_text, references_text),
         schema=DecisionSummary,
+        force=force,
     )
 
 

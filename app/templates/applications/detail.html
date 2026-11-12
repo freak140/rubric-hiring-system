@@ -5,8 +5,8 @@
   <a href="/openings/{{ opening.id }}" class="hover:underline">{{ opening.title }}</a>
 </p>
 <div class="flex items-center justify-between mb-6">
-  <h1 class="text-2xl font-bold">{{ application.candidate.full_name }}</h1>
-  <a href="/applications/{{ application.id }}/record" class="text-sm text-blue-700 hover:underline">View decision record</a>
+  <h1 class="text-2xl font-bold tracking-tight">{{ application.candidate.full_name }}</h1>
+  <a href="/applications/{{ application.id }}/record" class="text-sm text-indigo-700 hover:underline">View decision record</a>
 </div>
 <p class="text-sm text-gray-500 mb-6">{{ application.candidate.email }} · Source: {{ application.candidate.source.value | replace('_', ' ') | title }}{% if application.candidate.source_detail %} ({{ application.candidate.source_detail }}){% endif %}</p>
 
@@ -17,7 +17,7 @@
 <div class="flex flex-wrap items-center gap-3 mb-10">
   {% if gate_result and gate_result.allowed %}
   <form method="post" action="/applications/{{ application.id }}/advance">
-    <button class="bg-blue-600 text-white font-medium px-4 py-2 rounded-md hover:bg-blue-700">
+    <button class="bg-indigo-600 text-white font-medium px-4 py-2 rounded-lg hover:bg-indigo-700">
       Advance to {{ next_stage.value | replace('_', ' ') | title }}
     </button>
   </form>
@@ -25,27 +25,27 @@
 
   {% if can_reject_or_withdraw %}
   <details>
-    <summary class="cursor-pointer select-none text-sm text-red-600 px-3 py-2 border border-red-200 rounded-md">Reject</summary>
+    <summary class="cursor-pointer select-none text-sm text-red-600 px-3 py-2 border border-red-200 rounded-lg">Reject</summary>
     <form method="post" action="/applications/{{ application.id }}/reject" class="mt-2 flex gap-2">
       <input name="reason" required placeholder="Reason" class="border border-gray-300 rounded px-3 py-1.5 text-sm">
-      <button class="text-sm bg-red-600 text-white px-3 py-1.5 rounded-md hover:bg-red-700">Confirm reject</button>
+      <button class="text-sm bg-red-600 text-white px-3 py-1.5 rounded-lg hover:bg-red-700">Confirm reject</button>
     </form>
   </details>
   <details>
-    <summary class="cursor-pointer select-none text-sm text-gray-600 px-3 py-2 border border-gray-200 rounded-md">Withdraw</summary>
+    <summary class="cursor-pointer select-none text-sm text-gray-600 px-3 py-2 border border-gray-200 rounded-lg">Withdraw</summary>
     <form method="post" action="/applications/{{ application.id }}/withdraw" class="mt-2 flex gap-2">
       <input name="reason" required placeholder="Reason" class="border border-gray-300 rounded px-3 py-1.5 text-sm">
-      <button class="text-sm bg-gray-600 text-white px-3 py-1.5 rounded-md hover:bg-gray-700">Confirm withdraw</button>
+      <button class="text-sm bg-gray-600 text-white px-3 py-1.5 rounded-lg hover:bg-gray-700">Confirm withdraw</button>
     </form>
   </details>
   {% endif %}
 
   {% if can_override and gate_result and not gate_result.allowed %}
-  <details class="border border-purple-300 rounded-md px-3 py-2">
+  <details class="border border-purple-300 rounded-lg px-3 py-2">
     <summary class="cursor-pointer select-none text-sm text-purple-700 font-medium">Chairman override</summary>
     <form method="post" action="/applications/{{ application.id }}/override" class="mt-2 flex gap-2">
       <input name="override_reason" required placeholder="Reason for overriding the gate" class="border border-gray-300 rounded px-3 py-1.5 text-sm w-72">
-      <button class="text-sm bg-purple-700 text-white px-3 py-1.5 rounded-md hover:bg-purple-800">Override and advance</button>
+      <button class="text-sm bg-purple-700 text-white px-3 py-1.5 rounded-lg hover:bg-purple-800">Override and advance</button>
     </form>
   </details>
   {% endif %}
@@ -56,7 +56,7 @@
   <div class="flex items-center justify-between mb-3">
     <h2 class="text-lg font-semibold">Interviews</h2>
   </div>
-  <div class="bg-white border border-gray-200 rounded-md divide-y mb-3">
+  <div class="bg-white border border-gray-200 rounded-lg shadow-sm divide-y mb-3">
     {% for interview in application.interviews | sort(attribute="id") %}
     <a href="/interviews/{{ interview.id }}" class="block px-4 py-3 hover:bg-gray-50">
       <div class="flex items-center justify-between">
@@ -79,8 +79,8 @@
 
   {% if can_assign_interviewer %}
   <details>
-    <summary class="text-sm text-blue-600 cursor-pointer select-none">+ Assign an interviewer</summary>
-    <form method="post" action="/applications/{{ application.id }}/interviews" class="mt-2 flex flex-wrap gap-2 bg-white border border-gray-200 rounded-md p-3">
+    <summary class="text-sm text-indigo-600 cursor-pointer select-none">+ Assign an interviewer</summary>
+    <form method="post" action="/applications/{{ application.id }}/interviews" class="mt-2 flex flex-wrap gap-2 bg-white border border-gray-200 rounded-lg shadow-sm p-3">
       <select name="interview_type" class="border border-gray-300 rounded px-2 py-1.5 text-sm">
         {% for t in interview_types %}
         <option value="{{ t.value }}">{{ t.value | replace('_', ' ') | title }}</option>
@@ -91,7 +91,7 @@
         <option value="{{ i.id }}">{{ i.name }}</option>
         {% endfor %}
       </select>
-      <button class="text-sm bg-blue-600 text-white px-3 py-1.5 rounded-md hover:bg-blue-700">Assign</button>
+      <button class="text-sm bg-indigo-600 text-white px-3 py-1.5 rounded-lg hover:bg-indigo-700">Assign</button>
     </form>
   </details>
   {% endif %}
@@ -100,7 +100,7 @@
 {% if rated_interviews %}
 <section class="mb-10 overflow-x-auto">
   <h2 class="text-lg font-semibold mb-3">Ratings matrix</h2>
-  <table class="min-w-full bg-white border border-gray-200 rounded-md text-sm">
+  <table class="min-w-full bg-white border border-gray-200 rounded-lg shadow-sm text-sm">
     <thead>
       <tr class="border-b border-gray-200">
         <th class="text-left px-3 py-2">Scorecard item</th>
@@ -139,7 +139,7 @@
   <div class="flex items-center justify-between mb-3">
     <h2 class="text-lg font-semibold">References</h2>
   </div>
-  <div class="bg-white border border-gray-200 rounded-md divide-y mb-3">
+  <div class="bg-white border border-gray-200 rounded-lg shadow-sm divide-y mb-3">
     {% for reference in application.references %}
     <div class="px-4 py-3 flex items-center justify-between">
       <div>
@@ -151,7 +151,7 @@
           {{ reference.status.value | title }}
         </span>
         {% if can_manage_references and reference.status.value != "completed" %}
-        <a href="/references/{{ reference.id }}" class="text-sm text-blue-700 hover:underline">Conduct</a>
+        <a href="/references/{{ reference.id }}" class="text-sm text-indigo-700 hover:underline">Conduct</a>
         {% endif %}
       </div>
     </div>
@@ -162,8 +162,8 @@
 
   {% if can_name_reference %}
   <details>
-    <summary class="text-sm text-blue-600 cursor-pointer select-none">+ Name a reference</summary>
-    <form method="post" action="/applications/{{ application.id }}/references" class="mt-2 flex flex-wrap gap-2 bg-white border border-gray-200 rounded-md p-3">
+    <summary class="text-sm text-indigo-600 cursor-pointer select-none">+ Name a reference</summary>
+    <form method="post" action="/applications/{{ application.id }}/references" class="mt-2 flex flex-wrap gap-2 bg-white border border-gray-200 rounded-lg shadow-sm p-3">
       <input name="referee_name" required placeholder="Referee name" class="border border-gray-300 rounded px-2 py-1.5 text-sm">
       <select name="referee_relationship" class="border border-gray-300 rounded px-2 py-1.5 text-sm">
         <option value="former_manager">Former manager</option>
@@ -172,7 +172,7 @@
         <option value="other">Other</option>
       </select>
       <input name="contact" placeholder="Phone or email (optional)" class="border border-gray-300 rounded px-2 py-1.5 text-sm">
-      <button class="text-sm bg-blue-600 text-white px-3 py-1.5 rounded-md hover:bg-blue-700">Add</button>
+      <button class="text-sm bg-indigo-600 text-white px-3 py-1.5 rounded-lg hover:bg-indigo-700">Add</button>
     </form>
   </details>
   {% endif %}
@@ -181,7 +181,7 @@
 {% if application.safeguarding_checks %}
 <section class="mb-10">
   <h2 class="text-lg font-semibold mb-3">Safeguarding checklist</h2>
-  <div class="bg-white border border-gray-200 rounded-md divide-y">
+  <div class="bg-white border border-gray-200 rounded-lg shadow-sm divide-y">
     {% for check in application.safeguarding_checks %}
     <div class="px-4 py-3">
       <div class="flex items-center justify-between">
@@ -203,7 +203,7 @@
           <option value="flagged" {% if check.status.value == "flagged" %}selected{% endif %}>Flagged</option>
         </select>
         <input name="notes" value="{{ check.notes or '' }}" placeholder="Notes" class="border border-gray-300 rounded px-2 py-1 text-sm flex-1 min-w-[150px]">
-        <button class="text-sm bg-gray-700 text-white px-3 py-1 rounded-md hover:bg-gray-800">Save</button>
+        <button class="text-sm bg-gray-700 text-white px-3 py-1 rounded-lg hover:bg-gray-800">Save</button>
       </form>
       {% endif %}
     </div>
@@ -216,7 +216,7 @@
 <section class="mb-10">
   <h2 class="text-lg font-semibold mb-3">Decision</h2>
   {% if application.decision %}
-  <div class="bg-white border border-gray-200 rounded-md p-4 text-sm">
+  <div class="bg-white border border-gray-200 rounded-lg shadow-sm p-4 text-sm">
     <p><span class="font-medium">Outcome:</span> {{ application.decision.outcome.value | replace('_', ' ') | title }}</p>
     <p><span class="font-medium">Overall grade:</span> {{ application.decision.overall_grade.value }}</p>
     <p class="mt-2"><span class="font-medium">Rationale:</span> {{ application.decision.rationale }}</p>
@@ -224,20 +224,20 @@
   </div>
   {% endif %}
   {% if ai_enabled and can_record_decision and application.stage.value == "decision" %}
-  <div class="mt-3 bg-indigo-50 border border-indigo-200 rounded-md p-4">
+  <div class="mt-3 bg-indigo-50 border border-indigo-200 rounded-lg p-4">
     {% if ai_decision_summary %}
     <p class="text-xs text-indigo-700 font-medium mb-2">AI draft: review before use. Neutral summary, not a recommendation.</p>
     <p class="text-sm text-gray-700">{{ ai_decision_summary.summary }}</p>
     {% endif %}
     <form method="post" action="/applications/{{ application.id }}/ai/decision-summary" class="mt-2">
-      <button class="text-sm bg-indigo-600 text-white px-3 py-1.5 rounded-md hover:bg-indigo-700">
+      <button class="text-sm bg-indigo-600 text-white px-3 py-1.5 rounded-lg hover:bg-indigo-700">
         {{ "Regenerate" if ai_decision_summary else "Summarise evidence (AI)" }}
       </button>
     </form>
   </div>
   {% endif %}
   {% if can_record_decision and application.stage.value == "decision" %}
-  <form method="post" action="/applications/{{ application.id }}/decision" class="mt-3 space-y-2 bg-white border border-gray-200 rounded-md p-4">
+  <form method="post" action="/applications/{{ application.id }}/decision" class="mt-3 space-y-2 bg-white border border-gray-200 rounded-lg shadow-sm p-4">
     <div class="flex gap-3">
       <select name="outcome" class="border border-gray-300 rounded px-2 py-1.5 text-sm">
         <option value="hire">Hire</option>
@@ -250,7 +250,7 @@
       </select>
     </div>
     <textarea name="rationale" required rows="3" placeholder="Rationale (required)" class="w-full border border-gray-300 rounded px-3 py-2 text-sm"></textarea>
-    <button class="text-sm bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700">Save decision</button>
+    <button class="text-sm bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700">Save decision</button>
   </form>
   {% endif %}
 </section>
@@ -258,25 +258,38 @@
 
 {% if application.decision and application.decision.outcome.value == "hire" %}
 <section class="mb-10">
-  <h2 class="text-lg font-semibold mb-3">Sell plan</h2>
-  {% if can_record_sell_plan %}
-  <form method="post" action="/applications/{{ application.id }}/sell-plan" class="space-y-3 bg-white border border-gray-200 rounded-md p-4 text-sm">
+  <h2 class="text-lg font-semibold mb-3">Offer plan</h2>
+  {% set offer_fields = [
+    ("fit", "Fit", "Why this role fits who they are."),
+    ("family", "Family", "What matters to the people in their life."),
+    ("freedom", "Freedom", "The autonomy or flexibility that matters to them."),
+    ("fortune", "Fortune", "Compensation and growth, framed honestly."),
+    ("fun", "Fun", "What makes the work and the team enjoyable."),
+  ] %}
+  {% if can_record_sell_plan and application.stage.value == "offer" %}
+  <form method="post" action="/applications/{{ application.id }}/sell-plan" class="space-y-3 bg-white border border-gray-200 rounded-lg shadow-sm p-4 text-sm">
     {% set sp = application.sell_plan %}
-    {% for field, hint in [
-      ("fit", "Why this role fits who they are."),
-      ("family", "What matters to the people in their life."),
-      ("freedom", "The autonomy or flexibility that matters to them."),
-      ("fortune", "Compensation and growth, framed honestly."),
-      ("fun", "What makes the work and the team enjoyable."),
-    ] %}
+    {% for field, label, hint in offer_fields %}
     <div>
-      <label class="block font-medium mb-1 capitalize">{{ field }}</label>
+      <label class="block font-medium mb-1">{{ label }}</label>
       <p class="text-xs text-gray-400 mb-1">{{ hint }}</p>
       <textarea name="{{ field }}" rows="2" class="w-full border border-gray-300 rounded px-3 py-2">{{ sp[field] if sp else "" }}</textarea>
     </div>
     {% endfor %}
-    <button class="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700">Save sell plan</button>
+    <button class="bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700">Save offer plan</button>
   </form>
+  {% elif application.sell_plan %}
+  <div class="bg-white border border-gray-200 rounded-lg shadow-sm p-4 text-sm space-y-3">
+    {% set sp = application.sell_plan %}
+    {% for field, label, hint in offer_fields %}
+    {% if sp[field] %}
+    <div>
+      <p class="font-medium">{{ label }}</p>
+      <p class="text-gray-600">{{ sp[field] }}</p>
+    </div>
+    {% endif %}
+    {% endfor %}
+  </div>
   {% endif %}
 </section>
 {% endif %}

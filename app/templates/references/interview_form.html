@@ -2,7 +2,7 @@
 {% block title %}Reference · {{ reference.referee_name }}{% endblock %}
 {% block content %}
 <p class="text-sm text-gray-500 mb-1"><a href="/applications/{{ reference.application_id }}" class="hover:underline">&larr; Back to application</a></p>
-<h1 class="text-2xl font-bold mb-2">Reference: {{ reference.referee_name }}</h1>
+<h1 class="text-2xl font-bold tracking-tight mb-2">Reference: {{ reference.referee_name }}</h1>
 <p class="text-sm text-gray-500 mb-6">{{ reference.referee_relationship.value | replace('_', ' ') | title }}{% if reference.contact %} · {{ reference.contact }}{% endif %}</p>
 
 <p class="text-sm text-gray-500 mb-3">Use these questions as a guide:</p>
@@ -13,16 +13,16 @@
 </ol>
 
 {% if reference.status.value == "completed" %}
-<div class="bg-white border border-gray-200 rounded-md p-4 text-sm">
+<div class="bg-white border border-gray-200 rounded-lg shadow-sm p-4 text-sm">
   <p class="text-gray-600">{{ reference.notes or "No notes recorded." }}</p>
 </div>
 {% else %}
-<form method="post" action="/references/{{ reference.id }}" class="max-w-xl space-y-4 bg-white border border-gray-200 rounded-md p-6">
+<form method="post" action="/references/{{ reference.id }}" class="max-w-xl space-y-4 bg-white border border-gray-200 rounded-lg shadow-sm p-6">
   <div>
     <label class="block text-sm font-medium mb-1">Notes</label>
     <textarea name="notes" rows="8" class="w-full border border-gray-300 rounded px-3 py-2 text-sm"></textarea>
   </div>
-  <button class="bg-blue-600 text-white font-medium px-4 py-2 rounded-md hover:bg-blue-700">Mark complete</button>
+  <button class="bg-indigo-600 text-white font-medium px-4 py-2 rounded-lg hover:bg-indigo-700">Mark complete</button>
 </form>
 {% endif %}
 {% endblock %}

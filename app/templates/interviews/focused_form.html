@@ -2,14 +2,42 @@
 {% block title %}{{ interview.interview_type.value | replace('_', ' ') | title }} · {{ application.candidate.full_name }}{% endblock %}
 {% block content %}
 <p class="text-sm text-gray-500 mb-1"><a href="/applications/{{ application.id }}" class="hover:underline">&larr; {{ application.candidate.full_name }}</a></p>
-<h1 class="text-2xl font-bold mb-2">{{ interview.interview_type.value | replace('_', ' ') | title }} interview</h1>
-<p class="text-sm text-gray-500 mb-6">
-  Rate the candidate against each scorecard item with real evidence from what you observed.
-  {% if interview.interview_type.value == "demo_lesson" %}This is a demo lesson: watch them teach and grade the delivery against the same items.{% endif %}
+<h1 class="text-2xl font-bold tracking-tight mb-1">{{ interview.interview_type.value | replace('_', ' ') | title }} interview</h1>
+<p class="text-sm text-gray-500 mb-4">
+  {% if interview.interview_type.value == "demo_lesson" %}
+  An <b>observed performance</b>, not a conversation: watch them actually teach, and grade what you see them do.
+  {% else %}
+  A targeted <b>conversation</b>: ask about specific real situations, and grade what they tell you they did.
+  {% endif %}
+  Graded against the same scorecard either way -- this is just a second, independent way of gathering evidence for it.
 </p>
 
+{% if can_submit and interview.status.value != "completed" %}
+<div class="bg-indigo-50 border border-indigo-200 rounded-lg p-4 mb-6 text-sm text-indigo-900">
+  <p class="font-semibold mb-1">Your task</p>
+  {% if interview.interview_type.value == "demo_lesson" %}
+  <p class="mb-1">1. Sit in on a short sample lesson. Don't interview them -- just watch, and take notes on what actually happens in the room.</p>
+  {% else %}
+  <p class="mb-1">1. For each item below, ask them to walk through a real example. Probe for specifics -- "tell me about a time," not "would you."</p>
+  {% endif %}
+  <p>2. For every scorecard item, give an A/B/C grade and write down the actual evidence you observed or were told. Both are required before you can submit.</p>
+</div>
+{% endif %}
+
 {% if ai_enabled and can_submit and interview.status.value != "completed" %}
-<div class="mb-6 bg-indigo-50 border border-indigo-200 rounded-md p-4">
+<div class="mb-6 bg-indigo-50 border border-indigo-200 rounded-lg p-4">
+  {% if interview.interview_type.value == "demo_lesson" %}
+  {# A demo lesson is observed, not interviewed -- show what to look for, never questions to ask. #}
+  {% if ai_questions and ai_questions.demo_lesson_brief %}
+  <p class="text-xs text-indigo-700 font-medium mb-2">AI draft: review before use.</p>
+  <p class="text-sm text-gray-700">{{ ai_questions.demo_lesson_brief }}</p>
+  {% endif %}
+  <form method="post" action="/interviews/{{ interview.id }}/ai/focused-questions" class="mt-2">
+    <button class="text-sm bg-indigo-600 text-white px-3 py-1.5 rounded-lg hover:bg-indigo-700">
+      {{ "Regenerate" if (ai_questions and ai_questions.demo_lesson_brief) else "Generate" }} lesson brief (AI)
+    </button>
+  </form>
+  {% else %}
   {% if ai_questions %}
   <p class="text-xs text-indigo-700 font-medium mb-2">AI draft: review before use.</p>
   <ul class="list-disc list-inside text-sm text-gray-700">
@@ -17,20 +45,18 @@
     <li>{{ q }}</li>
     {% endfor %}
   </ul>
-  {% if ai_questions.demo_lesson_brief %}
-  <p class="text-sm text-gray-700 mt-2"><span class="font-medium">Demo lesson brief:</span> {{ ai_questions.demo_lesson_brief }}</p>
-  {% endif %}
   {% endif %}
   <form method="post" action="/interviews/{{ interview.id }}/ai/focused-questions" class="mt-2">
-    <button class="text-sm bg-indigo-600 text-white px-3 py-1.5 rounded-md hover:bg-indigo-700">
+    <button class="text-sm bg-indigo-600 text-white px-3 py-1.5 rounded-lg hover:bg-indigo-700">
       {{ "Regenerate" if ai_questions else "Generate" }} interview questions (AI)
     </button>
   </form>
+  {% endif %}
 </div>
 {% endif %}
 
 {% if interview.status.value == "completed" %}
-<div class="bg-white border border-gray-200 rounded-md p-4 text-sm mb-6">
+<div class="bg-white border border-gray-200 rounded-lg shadow-sm p-4 text-sm mb-6">
   <p class="text-gray-600 mb-3">{{ interview.notes or "No notes recorded." }}</p>
   <table class="w-full text-sm">
     <tbody>
@@ -45,25 +71,37 @@
   </table>
 </div>
 {% elif can_submit %}
-<form method="post" action="/interviews/{{ interview.id }}/focused" class="space-y-6 bg-white border border-gray-200 rounded-md p-6">
+<form method="post" action="/interviews/{{ interview.id }}/focused" class="space-y-6 bg-white border border-gray-200 rounded-lg shadow-sm p-6">
   <div>
-    <label class="block text-sm font-medium mb-1">Notes</label>
-    <textarea name="notes" id="interview-notes" rows="4" class="w-full border border-gray-300 rounded px-3 py-2 text-sm"></textarea>
+    <label class="block text-sm font-medium mb-1">{{ "What you observed" if interview.interview_type.value == "demo_lesson" else "Notes" }}</label>
+    <textarea
+      name="notes" id="interview-notes" rows="4"
+      placeholder="{{ 'What did you actually see them do in the room?' if interview.interview_type.value == 'demo_lesson' else 'What did they tell you?' }}"
+      class="w-full border border-gray-300 rounded px-3 py-2 text-sm"
+    ></textarea>
     {% if ai_enabled %}
-    <button
-      type="button"
-      hx-post="/interviews/{{ interview.id }}/ai/evidence-map"
-      hx-include="#interview-notes"
-      hx-target="#evidence-panel"
-      hx-swap="innerHTML"
-      class="mt-2 text-sm bg-indigo-600 text-white px-3 py-1.5 rounded-md hover:bg-indigo-700"
-    >
-      Suggest evidence (AI)
-    </button>
-    <div id="evidence-panel" class="mt-3 bg-indigo-50 border border-indigo-200 rounded-md p-4"></div>
+    <div class="mt-2 flex items-center gap-2">
+      <button
+        type="button"
+        hx-post="/interviews/{{ interview.id }}/ai/evidence-map"
+        hx-include="#interview-notes"
+        hx-target="#evidence-panel"
+        hx-swap="innerHTML"
+        hx-indicator="#evidence-loading"
+        class="text-sm bg-indigo-600 text-white px-3 py-1.5 rounded-lg hover:bg-indigo-700"
+      >
+        Suggest evidence (AI)
+      </button>
+      <span id="evidence-loading" class="htmx-indicator text-sm text-gray-500">Reading your notes&hellip;</span>
+    </div>
+    <div id="evidence-panel" class="mt-3"></div>
     {% endif %}
   </div>
 
+  <div class="border-t-2 border-indigo-200 pt-4">
+    <h2 class="text-lg font-semibold mb-1">Grade the candidate</h2>
+    <p class="text-sm text-gray-500 mb-4">One grade and one piece of evidence per item. Evidence is required -- a grade with no evidence won't save.</p>
+  </div>
   {% for item in items %}
   <div class="border-t border-gray-100 pt-4">
     <p class="font-medium text-sm">{{ item.title }} <span class="text-gray-400">({{ item.kind.value }})</span></p>
@@ -80,7 +118,7 @@
   </div>
   {% endfor %}
 
-  <button class="bg-blue-600 text-white font-medium px-4 py-2 rounded-md hover:bg-blue-700">Submit ratings</button>
+  <button class="bg-indigo-600 text-white font-medium px-4 py-2 rounded-lg hover:bg-indigo-700">Submit ratings</button>
 </form>
 {% else %}
 <p class="text-gray-500">Only the assigned interviewer can fill this in.</p>
@@ -89,7 +127,7 @@
 {% if can_release and interview.status.value == "assigned" %}
 <form method="post" action="/interviews/{{ interview.id }}/release" class="mt-6 flex gap-2">
   <input name="reason" required placeholder="Reason for releasing this interviewer" class="border border-gray-300 rounded px-3 py-1.5 text-sm w-72">
-  <button class="text-sm bg-gray-600 text-white px-3 py-1.5 rounded-md hover:bg-gray-700">Release interviewer</button>
+  <button class="text-sm bg-gray-600 text-white px-3 py-1.5 rounded-lg hover:bg-gray-700">Release interviewer</button>
 </form>
 {% endif %}
 {% endblock %}

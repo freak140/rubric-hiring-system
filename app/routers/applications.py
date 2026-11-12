@@ -174,7 +174,7 @@ def ai_decision_summary_route(application_id: int, context: dict = Depends(get_t
         raise HTTPException(status_code=403, detail="You cannot use this here.")
 
     try:
-        result = summarize_decision(db, ratings_text_for(application), references_text_for(application))
+        result = summarize_decision(db, ratings_text_for(application), references_text_for(application), force=True)
     except AIUnavailableError as exc:
         db.rollback()
         set_flash(response, "error", str(exc))
@@ -248,7 +248,10 @@ def record_sell_plan(
     current_user = context["current_user"]
     response = RedirectResponse(url=f"/applications/{application_id}", status_code=303)
     if not permissions.can_record_sell_plan(current_user, application.opening):
-        raise HTTPException(status_code=403, detail="You cannot record a sell plan for this opening.")
+        raise HTTPException(status_code=403, detail="You cannot record an offer plan for this opening.")
+    if application.stage != ApplicationStage.offer:
+        set_flash(response, "error", "The offer plan can only be edited while the application is at the offer stage.")
+        return response
 
     fields = {"fit": fit.strip() or None, "family": family.strip() or None, "freedom": freedom.strip() or None,
               "fortune": fortune.strip() or None, "fun": fun.strip() or None}
@@ -263,7 +266,7 @@ def record_sell_plan(
             setattr(application.sell_plan, key, value)
         log_event(db, current_user, "sell_plan.edit", "SellPlan", application.sell_plan.id)
     db.commit()
-    set_flash(response, "success", "Sell plan saved.")
+    set_flash(response, "success", "Offer plan saved.")
     return response
 
 

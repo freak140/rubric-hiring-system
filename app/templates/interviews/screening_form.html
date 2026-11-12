@@ -2,15 +2,15 @@
 {% block title %}Screening · {{ application.candidate.full_name }}{% endblock %}
 {% block content %}
 <p class="text-sm text-gray-500 mb-1"><a href="/applications/{{ application.id }}" class="hover:underline">&larr; {{ application.candidate.full_name }}</a></p>
-<h1 class="text-2xl font-bold mb-6">Screening interview</h1>
+<h1 class="text-2xl font-bold tracking-tight mb-6">Screening interview</h1>
 
 {% if interview.status.value == "completed" %}
-<div class="bg-white border border-gray-200 rounded-md p-4 text-sm">
+<div class="bg-white border border-gray-200 rounded-lg shadow-sm p-4 text-sm">
   <p><span class="font-medium">Outcome:</span> {{ interview.screening_outcome.value | title }}</p>
   <p class="mt-2 text-gray-600">{{ interview.notes or "No notes recorded." }}</p>
 </div>
 {% elif can_submit %}
-<form method="post" action="/interviews/{{ interview.id }}/screening" class="max-w-lg space-y-4 bg-white border border-gray-200 rounded-md p-6">
+<form method="post" action="/interviews/{{ interview.id }}/screening" class="max-w-lg space-y-4 bg-white border border-gray-200 rounded-lg shadow-sm p-6">
   <div>
     <label class="block text-sm font-medium mb-1">Notes</label>
     <textarea name="notes" rows="4" class="w-full border border-gray-300 rounded px-3 py-2 text-sm"></textarea>
@@ -22,7 +22,7 @@
       <option value="fail">Fail</option>
     </select>
   </div>
-  <button class="bg-blue-600 text-white font-medium px-4 py-2 rounded-md hover:bg-blue-700">Submit</button>
+  <button class="bg-indigo-600 text-white font-medium px-4 py-2 rounded-lg hover:bg-indigo-700">Submit</button>
 </form>
 {% else %}
 <p class="text-gray-500">Only the assigned interviewer can fill this in.</p>
@@ -31,7 +31,7 @@
 {% if can_release and interview.status.value == "assigned" %}
 <form method="post" action="/interviews/{{ interview.id }}/release" class="mt-6 flex gap-2">
   <input name="reason" required placeholder="Reason for releasing this interviewer" class="border border-gray-300 rounded px-3 py-1.5 text-sm w-72">
-  <button class="text-sm bg-gray-600 text-white px-3 py-1.5 rounded-md hover:bg-gray-700">Release interviewer</button>
+  <button class="text-sm bg-gray-600 text-white px-3 py-1.5 rounded-lg hover:bg-gray-700">Release interviewer</button>
 </form>
 {% endif %}
 {% endblock %}

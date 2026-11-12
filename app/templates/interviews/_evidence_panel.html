@@ -1,21 +1,30 @@
 {% if error %}
-<p class="text-sm text-red-600">{{ error }}</p>
+<div class="bg-red-50 border border-red-200 rounded-lg p-4 text-sm text-red-700">{{ error }}</div>
 {% elif mapping %}
-<p class="text-xs text-indigo-700 font-medium mb-2">AI draft: review before use.</p>
-<ul class="space-y-2 text-sm">
-  {% for item in mapping.items %}
-  <li>
-    <p class="font-medium">{{ item.scorecard_item_title }}</p>
-    {% if item.quotes %}
-    <ul class="list-disc list-inside text-gray-600">
-      {% for quote in item.quotes %}
-      <li>&ldquo;{{ quote }}&rdquo;</li>
-      {% endfor %}
-    </ul>
-    {% else %}
-    <p class="text-gray-400 italic">No evidence found.</p>
-    {% endif %}
-  </li>
-  {% endfor %}
-</ul>
+<div class="bg-indigo-50 border border-indigo-200 rounded-lg p-4">
+  <p class="text-xs text-indigo-700 font-medium mb-2">AI draft: review before use.</p>
+  {% set any_quotes = mapping.items | selectattr("quotes") | list %}
+  {% if not any_quotes %}
+  <p class="text-sm text-gray-600 mb-3">
+    The AI ran, but didn't find wording in your notes specific enough to quote for any item.
+    Try adding a concrete detail or two -- a number, a specific moment, what they actually said or did.
+  </p>
+  {% endif %}
+  <ul class="space-y-2 text-sm">
+    {% for item in mapping.items %}
+    <li>
+      <p class="font-medium">{{ item.scorecard_item_title }}</p>
+      {% if item.quotes %}
+      <ul class="list-disc list-inside text-gray-600">
+        {% for quote in item.quotes %}
+        <li>&ldquo;{{ quote }}&rdquo;</li>
+        {% endfor %}
+      </ul>
+      {% else %}
+      <p class="text-gray-400 italic">No evidence found.</p>
+      {% endif %}
+    </li>
+    {% endfor %}
+  </ul>
+</div>
 {% endif %}

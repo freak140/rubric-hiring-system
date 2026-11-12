@@ -61,6 +61,26 @@ def test_cache_hit_path_skips_the_llm_call(monkeypatch):
     assert db.added == []  # nothing new written on a cache hit
 
 
+def test_force_bypasses_a_cache_hit_and_updates_the_existing_row(monkeypatch):
+    cached_row = SimpleNamespace(output={"summary": "Old summary."}, provider="groq", model="llama-3.3-70b")
+    db = FakeSession(existing=cached_row)
+
+    def fake_call_llm(system_prompt, user_prompt, schema):
+        return schema(summary="Regenerated summary."), "gemini", "gemini-2.5-flash"
+
+    monkeypatch.setattr(ai_client, "call_llm", fake_call_llm)
+
+    result = call_llm_cached(db, "decision_summary", {"x": 1}, "v1", "system", "user", DecisionSummary, force=True)
+
+    assert result.cached is False
+    assert result.output.summary == "Regenerated summary."
+    # The existing row is updated in place, not duplicated as a new one --
+    # "Regenerate" means a fresh call, not a second cache entry.
+    assert db.added == []
+    assert cached_row.output == {"summary": "Regenerated summary."}
+    assert cached_row.provider == "gemini"
+
+
 def test_cache_miss_calls_llm_and_stores_result(monkeypatch):
     db = FakeSession(existing=None)
 

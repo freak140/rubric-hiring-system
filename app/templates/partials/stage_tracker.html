@@ -10,32 +10,35 @@
 {% set stage_order = ["sourced", "screening", "who_interview", "focused", "references", "decision", "offer", "hired"] %}
 {% set current_index = stage_order.index(application.stage.value) if application.stage.value in stage_order else -1 %}
 
-<ol class="flex flex-wrap gap-2 mb-2">
-  {% for key, label, why in steps %}
-  {% set idx = stage_order.index(key) %}
-  <li class="flex-1 min-w-[100px]">
-    <div class="rounded-md border px-2 py-1.5 text-xs text-center
-      {% if application.stage.value in ('rejected', 'withdrawn') %}bg-gray-100 border-gray-200 text-gray-400
-      {% elif idx < current_index or application.stage.value == 'hired' %}bg-green-50 border-green-300 text-green-800
-      {% elif idx == current_index %}bg-blue-50 border-blue-400 text-blue-900 font-semibold
-      {% else %}bg-gray-50 border-gray-200 text-gray-400{% endif %}">
-      {{ label }}
-    </div>
-  </li>
-  {% endfor %}
-</ol>
-
-{% if application.stage.value == "hired" %}
-<p class="text-sm text-green-700 mb-4 font-medium">Hired.</p>
-{% elif application.stage.value in ("rejected", "withdrawn") %}
-<p class="text-sm text-red-700 mb-4">This application was {{ application.stage.value }}.</p>
-{% endif %}
-
-<details class="mb-6 text-sm text-gray-600">
-  <summary class="cursor-pointer select-none text-gray-500">Why this step?</summary>
-  <div class="mt-2 space-y-2">
+<div class="bg-white border border-gray-200 rounded-lg shadow-sm p-4 mb-6">
+  <ol class="flex flex-wrap gap-2">
     {% for key, label, why in steps %}
-    <p><span class="font-medium text-gray-800">{{ label }}:</span> {{ why }}</p>
+    {% set idx = stage_order.index(key) %}
+    <li class="flex-1 min-w-[100px]">
+      <div class="rounded-lg border px-2 py-1.5 text-xs text-center font-medium flex items-center justify-center gap-1
+        {% if application.stage.value in ('rejected', 'withdrawn') %}bg-gray-100 border-gray-200 text-gray-400
+        {% elif idx < current_index or application.stage.value == 'hired' %}bg-green-50 border-green-300 text-green-800
+        {% elif idx == current_index %}bg-indigo-600 border-indigo-600 text-white shadow-sm ring-2 ring-indigo-100
+        {% else %}bg-gray-50 border-gray-200 text-gray-400 font-normal{% endif %}">
+        {% if application.stage.value not in ('rejected', 'withdrawn') and (idx < current_index or application.stage.value == 'hired') %}<span>&check;</span>{% endif %}
+        {{ label }}
+      </div>
+    </li>
     {% endfor %}
-  </div>
-</details>
+  </ol>
+
+  {% if application.stage.value == "hired" %}
+  <p class="text-sm text-green-700 mt-3 font-medium">&check; Hired.</p>
+  {% elif application.stage.value in ("rejected", "withdrawn") %}
+  <p class="text-sm text-red-700 mt-3">This application was {{ application.stage.value }}.</p>
+  {% endif %}
+
+  <details class="mt-3 text-sm text-gray-600">
+    <summary class="cursor-pointer select-none text-gray-500 hover:text-gray-700">Why this step?</summary>
+    <div class="mt-2 space-y-2">
+      {% for key, label, why in steps %}
+      <p><span class="font-medium text-gray-800">{{ label }}:</span> {{ why }}</p>
+      {% endfor %}
+    </div>
+  </details>
+</div>

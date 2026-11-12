@@ -2,9 +2,9 @@
 {% block title %}{{ opening.title }} · Rubric{% endblock %}
 {% block content %}
 <div class="flex items-center justify-between mb-2">
-  <h1 class="text-2xl font-bold">{{ opening.title }}</h1>
+  <h1 class="text-2xl font-bold tracking-tight">{{ opening.title }}</h1>
   <span class="text-xs font-medium px-2 py-1 rounded-full
-    {% if opening.status.value == 'open' %}bg-blue-100 text-blue-800
+    {% if opening.status.value == 'open' %}bg-indigo-100 text-indigo-800
     {% elif opening.status.value == 'filled' %}bg-green-100 text-green-800
     {% elif opening.status.value == 'closed' %}bg-gray-100 text-gray-600
     {% else %}bg-amber-100 text-amber-800{% endif %}">
@@ -35,12 +35,12 @@
   </p>
   {% endif %}
 
-  <div class="bg-white border border-gray-200 rounded-md p-4 mb-4">
+  <div class="bg-white border border-gray-200 rounded-lg shadow-sm p-4 mb-4">
     <h3 class="text-sm font-medium text-gray-500 mb-2">Mission</h3>
     {% if can_manage_scorecard and (not scorecard or scorecard.status.value != "approved") %}
     <form method="post" action="/openings/{{ opening.id }}/scorecard" class="space-y-2">
       <textarea name="mission" rows="2" class="w-full border border-gray-300 rounded px-3 py-2 text-sm" placeholder="What does success in this role look like?">{{ scorecard.mission if scorecard else "" }}</textarea>
-      <button type="submit" class="bg-blue-600 text-white text-sm font-medium px-3 py-1.5 rounded-md hover:bg-blue-700">Save mission</button>
+      <button type="submit" class="bg-indigo-600 text-white text-sm font-medium px-3 py-1.5 rounded-lg hover:bg-indigo-700">Save mission</button>
     </form>
     {% else %}
     <p class="text-sm text-gray-800">{{ scorecard.mission if scorecard else "Not set yet." }}</p>
@@ -48,21 +48,27 @@
   </div>
 
   {% if ai_enabled and can_manage_scorecard and (not scorecard or scorecard.status.value != "approved") %}
-  <details class="mb-4">
-    <summary class="text-sm text-indigo-600 cursor-pointer select-none">+ Draft scorecard with AI</summary>
-    <form method="post" action="/openings/{{ opening.id }}/scorecard/ai-draft" class="mt-2 space-y-2 bg-indigo-50 border border-indigo-200 rounded-md p-3">
-      <textarea name="brief" required rows="2" placeholder="Short brief: what does this role need to accomplish?" class="w-full border border-gray-300 rounded px-2 py-1.5 text-sm"></textarea>
-      <button class="text-sm bg-indigo-600 text-white px-3 py-1.5 rounded-md hover:bg-indigo-700">Draft with AI</button>
-      <p class="text-xs text-gray-500">AI draft: review before use. Inserts draft items below for you to edit and approve.</p>
-    </form>
-  </details>
+    {% if not scorecard or not scorecard.items %}
+    <details class="mb-4">
+      <summary class="text-sm text-indigo-600 cursor-pointer select-none">+ Draft scorecard with AI</summary>
+      <form method="post" action="/openings/{{ opening.id }}/scorecard/ai-draft" class="mt-2 space-y-2 bg-indigo-50 border border-indigo-200 rounded-lg p-3">
+        <textarea name="brief" required rows="2" placeholder="Short brief: what does this role need to accomplish?" class="w-full border border-gray-300 rounded px-2 py-1.5 text-sm"></textarea>
+        <button class="text-sm bg-indigo-600 text-white px-3 py-1.5 rounded-lg hover:bg-indigo-700">Draft with AI</button>
+        <p class="text-xs text-gray-500">AI draft: review before use. Inserts draft items below for you to edit and approve.</p>
+      </form>
+    </details>
+    {% else %}
+    <p class="text-xs text-gray-400 mb-4">
+      AI drafting is one-shot, to avoid duplicating items -- edit or delete items below directly from here on.
+    </p>
+    {% endif %}
   {% endif %}
 
   {% if scorecard %}
   {% for kind in item_kinds %}
   <div class="mb-4">
     <h3 class="text-sm font-medium text-gray-500 mb-2">{{ kind.value | title }}s</h3>
-    <div class="bg-white border border-gray-200 rounded-md divide-y">
+    <div class="bg-white border border-gray-200 rounded-lg shadow-sm divide-y">
       {% set items = scorecard.items | selectattr("kind", "equalto", kind) | sort(attribute="position") | list %}
       {% for item in items %}
       <div class="px-4 py-3">
@@ -97,7 +103,7 @@
             {% if kind.value == "outcome" %}
             <input name="measure" value="{{ item.measure or '' }}" placeholder="How success is measured" class="w-full border border-gray-300 rounded px-2 py-1 text-sm">
             {% endif %}
-            <button type="submit" class="text-sm bg-gray-700 text-white px-3 py-1 rounded-md hover:bg-gray-800">Save</button>
+            <button type="submit" class="text-sm bg-gray-700 text-white px-3 py-1 rounded-lg hover:bg-gray-800">Save</button>
           </form>
         </details>
         {% endif %}
@@ -109,15 +115,15 @@
 
     {% if can_manage_scorecard and scorecard.status.value != "approved" %}
     <details class="mt-2">
-      <summary class="text-sm text-blue-600 cursor-pointer select-none">+ Add {{ kind.value }}</summary>
-      <form method="post" action="/openings/{{ opening.id }}/scorecard/items" class="mt-2 space-y-2 bg-white border border-gray-200 rounded-md p-3">
+      <summary class="text-sm text-indigo-600 cursor-pointer select-none">+ Add {{ kind.value }}</summary>
+      <form method="post" action="/openings/{{ opening.id }}/scorecard/items" class="mt-2 space-y-2 bg-white border border-gray-200 rounded-lg shadow-sm p-3">
         <input type="hidden" name="kind" value="{{ kind.value }}">
         <input name="title" required placeholder="Title" class="w-full border border-gray-300 rounded px-2 py-1 text-sm">
         <textarea name="description" required rows="2" placeholder="Description" class="w-full border border-gray-300 rounded px-2 py-1 text-sm"></textarea>
         {% if kind.value == "outcome" %}
         <input name="measure" placeholder="How success is measured" class="w-full border border-gray-300 rounded px-2 py-1 text-sm">
         {% endif %}
-        <button type="submit" class="text-sm bg-blue-600 text-white px-3 py-1 rounded-md hover:bg-blue-700">Add</button>
+        <button type="submit" class="text-sm bg-indigo-600 text-white px-3 py-1 rounded-lg hover:bg-indigo-700">Add</button>
       </form>
     </details>
     {% endif %}
@@ -126,7 +132,7 @@
 
   {% if can_manage_scorecard and scorecard.status.value != "approved" %}
   <form method="post" action="/openings/{{ opening.id }}/scorecard/approve" onsubmit="return confirm('Approve this scorecard? It cannot be edited afterwards.');">
-    <button type="submit" class="bg-green-600 text-white font-medium px-4 py-2 rounded-md hover:bg-green-700">
+    <button type="submit" class="bg-green-600 text-white font-medium px-4 py-2 rounded-lg hover:bg-green-700">
       Approve scorecard
     </button>
   </form>
@@ -138,7 +144,7 @@
   <div class="flex items-center justify-between mb-3">
     <h2 class="text-lg font-semibold">Candidate pipeline</h2>
     {% if can_add_candidate %}
-    <a href="/openings/{{ opening.id }}/candidates/new" class="text-sm bg-blue-600 text-white font-medium px-3 py-1.5 rounded-md hover:bg-blue-700">
+    <a href="/openings/{{ opening.id }}/candidates/new" class="text-sm bg-indigo-600 text-white font-medium px-3 py-1.5 rounded-lg hover:bg-indigo-700">
       Add candidate
     </a>
     {% endif %}
@@ -146,21 +152,30 @@
 
   {% set stage_order = ["sourced", "screening", "who_interview", "focused", "references", "decision", "offer", "hired", "rejected", "withdrawn"] %}
   {% if pipeline %}
-  <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-    {% for stage in stage_order %}
-    {% if pipeline.get(stage) %}
-    <div class="bg-white border border-gray-200 rounded-md p-3">
-      <h3 class="text-sm font-semibold text-gray-600 mb-2">{{ stage | replace('_', ' ') | title }} ({{ pipeline[stage] | length }})</h3>
-      <ul class="space-y-1">
-        {% for application in pipeline[stage] %}
-        <li>
-          <a href="/applications/{{ application.id }}" class="text-sm text-blue-700 hover:underline">{{ application.candidate.full_name }}</a>
-        </li>
-        {% endfor %}
-      </ul>
+  <p class="text-xs text-gray-400 mb-2 sm:hidden">Scroll sideways to see every stage &rarr;</p>
+  <div class="overflow-x-auto pb-2 -mx-4 px-4">
+    <div class="flex gap-3 w-max">
+      {% for stage in stage_order %}
+      <div class="w-40 shrink-0">
+        <div class="rounded-t-md px-2 py-1.5 text-xs font-semibold text-center truncate
+          {% if stage == 'hired' %}bg-green-100 text-green-800
+          {% elif stage in ('rejected', 'withdrawn') %}bg-gray-100 text-gray-500
+          {% else %}bg-indigo-50 text-indigo-800{% endif %}">
+          {{ stage | replace('_', ' ') | title }} ({{ pipeline.get(stage, []) | length }})
+        </div>
+        <div class="border border-t-0 border-gray-200 rounded-b-md bg-white p-1.5 min-h-[64px] space-y-1.5">
+          {% for application in pipeline.get(stage, []) %}
+          <a href="/applications/{{ application.id }}"
+             class="block text-xs bg-gray-50 hover:bg-indigo-50 border border-gray-200 rounded px-2 py-1.5 text-gray-800 hover:text-indigo-700 truncate">
+            {{ application.candidate.full_name }}
+          </a>
+          {% else %}
+          <p class="text-xs text-gray-300 text-center py-3">&mdash;</p>
+          {% endfor %}
+        </div>
+      </div>
+      {% endfor %}
     </div>
-    {% endif %}
-    {% endfor %}
   </div>
   {% else %}
   <p class="text-gray-500 text-sm">No candidates yet.</p>

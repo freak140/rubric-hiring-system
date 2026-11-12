@@ -1,26 +1,59 @@
 {% extends "base.html" %}
 {% block title %}My interviews · Rubric{% endblock %}
 {% block content %}
-<h1 class="text-2xl font-bold mb-6">My interviews</h1>
+<h1 class="text-2xl font-bold tracking-tight mb-1">My interviews</h1>
+<p class="text-sm text-gray-500 mb-6">Your assigned interviews. Each one tells you what to ask and, where a grade is needed, where to give it.</p>
 
-<div class="bg-white border border-gray-200 rounded-md divide-y">
-  {% for interview in interviews %}
-  <a href="/interviews/{{ interview.id }}" class="block px-4 py-3 hover:bg-gray-50">
-    <div class="flex items-center justify-between">
+{% set pending = interviews | selectattr("status.value", "equalto", "assigned") | list %}
+{% set done = interviews | rejectattr("status.value", "equalto", "assigned") | list %}
+
+<section class="mb-8">
+  <h2 class="text-sm font-semibold text-gray-500 uppercase mb-2">Needs your action ({{ pending | length }})</h2>
+  {% if pending %}
+  <div class="bg-white border border-gray-200 rounded-lg shadow-sm divide-y">
+    {% for interview in pending %}
+    <a href="/interviews/{{ interview.id }}" class="flex items-center justify-between gap-3 px-4 py-3 hover:bg-amber-50">
       <div>
-        <p class="text-sm font-medium">{{ interview.application.candidate.full_name }} — {{ interview.interview_type.value | replace('_', ' ') | title }}</p>
-        <p class="text-xs text-gray-500">{{ interview.application.opening.title }}</p>
+        <p class="text-sm font-medium">{{ interview.application.candidate.full_name }} &middot; {{ interview.application.opening.title }}</p>
+        <p class="text-xs text-gray-500">
+          {% if interview.interview_type.value in ("focused", "demo_lesson") %}
+          {{ interview.interview_type.value | replace('_', ' ') | title }} interview &mdash; ask the questions, then grade every scorecard item with evidence.
+          {% elif interview.interview_type.value == "who" %}
+          Who interview &mdash; walk through their career chronologically and write notes. No grade on this one.
+          {% else %}
+          Screening call &mdash; write notes and mark pass or fail.
+          {% endif %}
+        </p>
       </div>
-      <span class="text-xs font-medium px-2 py-1 rounded-full
-        {% if interview.status.value == 'completed' %}bg-green-100 text-green-800
-        {% elif interview.status.value == 'released' %}bg-gray-100 text-gray-600
-        {% else %}bg-amber-100 text-amber-800{% endif %}">
-        {{ interview.status.value | title }}
-      </span>
-    </div>
-  </a>
+      <span class="shrink-0 text-sm font-medium text-amber-700 bg-amber-100 px-3 py-1.5 rounded-lg">Start &rarr;</span>
+    </a>
+    {% endfor %}
+  </div>
   {% else %}
-  <p class="px-4 py-3 text-sm text-gray-400">No interviews assigned to you yet.</p>
-  {% endfor %}
-</div>
+  <p class="text-sm text-gray-400">Nothing pending. Nice.</p>
+  {% endif %}
+</section>
+
+<section>
+  <h2 class="text-sm font-semibold text-gray-500 uppercase mb-2">Done ({{ done | length }})</h2>
+  <div class="bg-white border border-gray-200 rounded-lg shadow-sm divide-y">
+    {% for interview in done %}
+    <a href="/interviews/{{ interview.id }}" class="block px-4 py-3 hover:bg-gray-50">
+      <div class="flex items-center justify-between">
+        <div>
+          <p class="text-sm font-medium">{{ interview.application.candidate.full_name }} &mdash; {{ interview.interview_type.value | replace('_', ' ') | title }}</p>
+          <p class="text-xs text-gray-500">{{ interview.application.opening.title }}</p>
+        </div>
+        <span class="text-xs font-medium px-2 py-1 rounded-full
+          {% if interview.status.value == 'completed' %}bg-green-100 text-green-800
+          {% else %}bg-gray-100 text-gray-600{% endif %}">
+          {{ interview.status.value | title }}
+        </span>
+      </div>
+    </a>
+    {% else %}
+    <p class="px-4 py-3 text-sm text-gray-400">No completed interviews yet.</p>
+    {% endfor %}
+  </div>
+</section>
 {% endblock %}

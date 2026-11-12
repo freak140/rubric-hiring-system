@@ -185,11 +185,14 @@ def ai_draft_scorecard(
         return response
     if not permissions.can_manage_scorecard(current_user, opening):
         raise HTTPException(status_code=403, detail="You cannot edit this scorecard.")
+    if opening.scorecard is not None and opening.scorecard.items:
+        set_flash(response, "error", "This scorecard already has items -- AI drafting is one-shot; edit items directly instead.")
+        return response
 
     try:
         if opening.scorecard is not None:
             assert_scorecard_editable(opening.scorecard)
-        result = draft_scorecard(db, opening, brief)
+        result = draft_scorecard(db, opening, brief, force=True)
     except AIUnavailableError as exc:
         db.rollback()
         set_flash(response, "error", str(exc))

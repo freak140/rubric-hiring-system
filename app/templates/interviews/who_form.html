@@ -2,7 +2,7 @@
 {% block title %}Who interview · {{ application.candidate.full_name }}{% endblock %}
 {% block content %}
 <p class="text-sm text-gray-500 mb-1"><a href="/applications/{{ application.id }}" class="hover:underline">&larr; {{ application.candidate.full_name }}</a></p>
-<h1 class="text-2xl font-bold mb-2">Who interview</h1>
+<h1 class="text-2xl font-bold tracking-tight mb-2">Who interview</h1>
 <p class="text-sm text-gray-500 mb-6">Walk chronologically through each job, in order, asking:</p>
 <ol class="list-decimal list-inside text-sm text-gray-700 mb-6 space-y-1">
   {% for q in questions %}
@@ -11,16 +11,16 @@
 </ol>
 
 {% if interview.status.value == "completed" %}
-<div class="bg-white border border-gray-200 rounded-md p-4 text-sm mb-6">
+<div class="bg-white border border-gray-200 rounded-lg shadow-sm p-4 text-sm mb-6">
   <p class="text-gray-600">{{ interview.notes or "No notes recorded." }}</p>
 </div>
 {% elif can_submit %}
-<form method="post" action="/interviews/{{ interview.id }}/who" class="max-w-xl space-y-4 bg-white border border-gray-200 rounded-md p-6 mb-8">
+<form method="post" action="/interviews/{{ interview.id }}/who" class="max-w-xl space-y-4 bg-white border border-gray-200 rounded-lg shadow-sm p-6 mb-8">
   <div>
     <label class="block text-sm font-medium mb-1">Notes</label>
     <textarea name="notes" rows="8" class="w-full border border-gray-300 rounded px-3 py-2 text-sm" placeholder="Capture answers chronologically, job by job."></textarea>
   </div>
-  <button class="bg-blue-600 text-white font-medium px-4 py-2 rounded-md hover:bg-blue-700">Mark complete</button>
+  <button class="bg-indigo-600 text-white font-medium px-4 py-2 rounded-lg hover:bg-indigo-700">Mark complete</button>
 </form>
 {% else %}
 <p class="text-gray-500 mb-8">Only the assigned interviewer can fill this in.</p>
@@ -29,7 +29,7 @@
 <h2 class="text-lg font-semibold mb-2">References the candidate named</h2>
 <p class="text-sm text-gray-500 mb-3">Ask who they worked with at each job, especially their direct manager, and add them here.</p>
 {% if can_name_reference %}
-<form method="post" action="/applications/{{ application.id }}/references" class="flex flex-wrap gap-2 bg-white border border-gray-200 rounded-md p-3 mb-6">
+<form method="post" action="/applications/{{ application.id }}/references" class="flex flex-wrap gap-2 bg-white border border-gray-200 rounded-lg shadow-sm p-3 mb-6">
   <input name="referee_name" required placeholder="Referee name" class="border border-gray-300 rounded px-2 py-1.5 text-sm">
   <select name="referee_relationship" class="border border-gray-300 rounded px-2 py-1.5 text-sm">
     {% for r in relationships %}
@@ -37,11 +37,11 @@
     {% endfor %}
   </select>
   <input name="contact" placeholder="Phone or email (optional)" class="border border-gray-300 rounded px-2 py-1.5 text-sm">
-  <button class="text-sm bg-blue-600 text-white px-3 py-1.5 rounded-md hover:bg-blue-700">Add reference</button>
+  <button class="text-sm bg-indigo-600 text-white px-3 py-1.5 rounded-lg hover:bg-indigo-700">Add reference</button>
 </form>
 {% endif %}
 
-<div class="bg-white border border-gray-200 rounded-md divide-y">
+<div class="bg-white border border-gray-200 rounded-lg shadow-sm divide-y">
   {% for reference in application.references %}
   <div class="px-4 py-2 text-sm">{{ reference.referee_name }} ({{ reference.referee_relationship.value | replace('_', ' ') | title }})</div>
   {% else %}
@@ -52,7 +52,7 @@
 {% if can_release and interview.status.value == "assigned" %}
 <form method="post" action="/interviews/{{ interview.id }}/release" class="mt-6 flex gap-2">
   <input name="reason" required placeholder="Reason for releasing this interviewer" class="border border-gray-300 rounded px-3 py-1.5 text-sm w-72">
-  <button class="text-sm bg-gray-600 text-white px-3 py-1.5 rounded-md hover:bg-gray-700">Release interviewer</button>
+  <button class="text-sm bg-gray-600 text-white px-3 py-1.5 rounded-lg hover:bg-gray-700">Release interviewer</button>
 </form>
 {% endif %}
 {% endblock %}

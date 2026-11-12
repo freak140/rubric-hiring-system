@@ -126,24 +126,40 @@ def call_llm_cached(
     system_prompt: str,
     user_prompt: str,
     schema: type[BaseModel],
+    force: bool = False,
 ) -> AICallResult:
-    """Looks up a cached AIOutput by (task, sha256(normalised input)) before calling the LLM."""
+    """Looks up a cached AIOutput by (task, sha256(normalised input)) before calling the LLM.
+
+    `force=True` skips the cache lookup and always makes a fresh call -- this is
+    what "Regenerate" means. The input (and so the cache key) hasn't changed, so
+    without this the LLM is never actually called again: a plain cache-first
+    lookup would just keep handing back the same stored row forever, which
+    makes a "Regenerate" button silently do nothing new. The fresh result
+    still overwrites the same cache row, so the next page load (a plain,
+    non-forced peek) sees the regenerated version, not the original.
+    """
     input_hash = compute_input_hash({**input_data, "prompt_version": prompt_version})
 
     cached = db.query(AIOutput).filter(AIOutput.task == task, AIOutput.input_hash == input_hash).first()
-    if cached is not None:
+    if cached is not None and not force:
         return AICallResult(output=schema.model_validate(cached.output), provider=cached.provider, model=cached.model, cached=True)
 
     output, provider, model = call_llm(system_prompt, user_prompt, schema)
 
-    record = AIOutput(
-        task=task,
-        input_hash=input_hash,
-        provider=provider,
-        model=model,
-        prompt_version=prompt_version,
-        output=output.model_dump(),
-    )
-    db.add(record)
+    if cached is not None:
+        cached.provider = provider
+        cached.model = model
+        cached.output = output.model_dump()
+    else:
+        db.add(
+            AIOutput(
+                task=task,
+                input_hash=input_hash,
+                provider=provider,
+                model=model,
+                prompt_version=prompt_version,
+                output=output.model_dump(),
+            )
+        )
     db.flush()
     return AICallResult(output=output, provider=provider, model=model, cached=False)

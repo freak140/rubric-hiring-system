@@ -52,6 +52,7 @@ from app.services.ai.features import (  # noqa: E402
     references_text_for,
 )
 from app.services.audit import log_event  # noqa: E402
+from app.services.auth import hash_password  # noqa: E402
 from app.services.workflow import advance_application, approve_scorecard  # noqa: E402
 
 ALL_TABLES = [
@@ -67,13 +68,19 @@ def wipe(db) -> None:
     db.commit()
 
 
+# Shared password for every seeded user, so "normal mode" (real /login) can be
+# tried against the demo data too. Documented in README.md.
+DEMO_PASSWORD = "rubric-demo"
+
+
 def make_users(db) -> dict[str, User]:
-    chairman = User(name="Arvind Mehta", email="arvind.mehta@rubric.school", app_role=AppRole.chairman)
-    principal = User(name="Sunita Iyer", email="sunita.iyer@rubric.school", app_role=AppRole.principal)
-    senior_teacher = User(name="Deepak Menon", email="deepak.menon@rubric.school", app_role=AppRole.interviewer)
-    interviewer2 = User(name="Fatima Siddiqui", email="fatima.siddiqui@rubric.school", app_role=AppRole.interviewer)
-    interviewer3 = User(name="Rohan Kapoor", email="rohan.kapoor@rubric.school", app_role=AppRole.interviewer)
-    hr = User(name="Kavita Nair", email="kavita.nair@rubric.school", app_role=AppRole.hr)
+    password_hash = hash_password(DEMO_PASSWORD)
+    chairman = User(name="Arvind Mehta", email="arvind.mehta@rubric.school", app_role=AppRole.chairman, password_hash=password_hash)
+    principal = User(name="Sunita Iyer", email="sunita.iyer@rubric.school", app_role=AppRole.principal, password_hash=password_hash)
+    senior_teacher = User(name="Deepak Menon", email="deepak.menon@rubric.school", app_role=AppRole.interviewer, password_hash=password_hash)
+    interviewer2 = User(name="Fatima Siddiqui", email="fatima.siddiqui@rubric.school", app_role=AppRole.interviewer, password_hash=password_hash)
+    interviewer3 = User(name="Rohan Kapoor", email="rohan.kapoor@rubric.school", app_role=AppRole.interviewer, password_hash=password_hash)
+    hr = User(name="Kavita Nair", email="kavita.nair@rubric.school", app_role=AppRole.hr, password_hash=password_hash)
     db.add_all([chairman, principal, senior_teacher, interviewer2, interviewer3, hr])
     db.flush()
     return {
@@ -344,21 +351,6 @@ def hire_priya(db, opening, items, users) -> Application:
 
     advance(db, application, users["principal"], ApplicationStage.hired)
     opening.status = OpeningStatus.filled
-
-    # A third, still-pending focused interview on an already-hired application, purely so the
-    # demo tour has something live to submit: a third interviewer can fill this in and
-    # immediately see the ratings matrix unlock to show Deepak's and Fatima's evidence too.
-    pending_focused = Interview(
-        application=application, interview_type=InterviewType.focused, interviewer=users["interviewer3"],
-        status=InterviewStatus.assigned,
-    )
-    db.add(pending_focused)
-    db.flush()
-    log_event(
-        db, users["principal"], "interview.assign", "Interview", pending_focused.id,
-        details={"interview_type": "focused", "interviewer_id": users["interviewer3"].id},
-    )
-
     return application
 
 
@@ -460,6 +452,22 @@ def block_rahul(db, opening, items, users) -> Application:
     log_event(db, users["hr"], "reference.complete", "Reference", ref1.id)
     # ref2 (Sameer Joshi) intentionally stays "named": HR hasn't reached him yet, so this
     # application sits blocked at references with only one completed reference.
+
+    # A still-pending demo lesson: a distinct round from the focused interview above (teaching
+    # candidates get both, same as Priya did), given by a different interviewer, not a repeat of
+    # a round already held. This is also the demo tour's live "submit a rating" moment -- unlike
+    # a hired candidate, Rahul's application is genuinely still active, so a pending interview
+    # here is expected, not contradictory.
+    demo_lesson = Interview(
+        application=application, interview_type=InterviewType.demo_lesson, interviewer=users["interviewer3"],
+        status=InterviewStatus.assigned,
+    )
+    db.add(demo_lesson)
+    db.flush()
+    log_event(
+        db, users["principal"], "interview.assign", "Interview", demo_lesson.id,
+        details={"interview_type": "demo_lesson", "interviewer_id": users["interviewer3"].id},
+    )
 
     return application
 
@@ -852,6 +860,7 @@ def run_seed() -> None:
         print(f"  Openings: {db.query(RoleOpening).count()}")
         print(f"  Candidates: {db.query(Candidate).count()}")
         print(f"  Applications: {db.query(Application).count()}")
+        print(f"\nNormal-mode login (any seeded user's email, shared password): {DEMO_PASSWORD}")
     finally:
         db.close()
 
