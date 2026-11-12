@@ -227,7 +227,7 @@ def ai_focused_questions(interview_id: int, context: dict = Depends(get_template
 
     is_teaching = interview.application.opening.role_type == RoleType.teaching
     try:
-        result = generate_focused_questions(db, items, is_teaching)
+        result = generate_focused_questions(db, items, is_teaching, force=True)
     except AIUnavailableError as exc:
         db.rollback()
         set_flash(response, "error", str(exc))
@@ -283,13 +283,15 @@ async def ai_evidence_map(interview_id: int, request: Request, context: dict = D
 @router.post("/interviews/{interview_id}/release")
 def release(
     interview_id: int,
+    request: Request,
     reason: str = Form(...),
     context: dict = Depends(get_template_context),
     db: Session = Depends(get_db),
 ):
     interview = load_interview(db, interview_id)
     current_user = context["current_user"]
-    response = RedirectResponse(url=f"/applications/{interview.application_id}", status_code=303)
+    redirect_to = request.headers.get("referer") or f"/applications/{interview.application_id}"
+    response = RedirectResponse(url=redirect_to, status_code=303)
     try:
         release_interviewer(db, interview, current_user, reason)
         db.commit()

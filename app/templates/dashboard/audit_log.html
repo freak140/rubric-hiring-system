@@ -1,7 +1,7 @@
 {% extends "base.html" %}
 {% block title %}Audit log · Rubric{% endblock %}
 {% block content %}
-<h1 class="text-2xl font-bold mb-6">Audit log</h1>
+<h1 class="text-2xl font-bold tracking-tight mb-6">Audit log</h1>
 
 <form method="get" action="/audit-log" class="flex flex-wrap gap-3 mb-6 text-sm items-center">
   <select name="opening_id" onchange="this.form.submit()" class="border border-gray-300 rounded px-3 py-1.5 bg-white">
@@ -28,7 +28,7 @@
   </label>
 </form>
 
-<div class="overflow-x-auto bg-white border border-gray-200 rounded-md">
+<div class="overflow-x-auto bg-white border border-gray-200 rounded-lg shadow-sm">
   <table class="min-w-full text-sm">
     <thead class="bg-gray-50">
       <tr>

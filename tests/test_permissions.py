@@ -50,6 +50,16 @@ def test_only_chairman_sees_dashboard_audit_log_and_can_override():
     assert not permissions.can_override_gate(principal)
 
 
+def test_only_principal_sees_the_principal_dashboard():
+    chairman = make_user(AppRole.chairman)
+    principal = make_user(AppRole.principal)
+    hr = make_user(AppRole.hr)
+
+    assert permissions.can_view_principal_dashboard(principal)
+    assert not permissions.can_view_principal_dashboard(chairman)
+    assert not permissions.can_view_principal_dashboard(hr)
+
+
 def test_only_the_assigned_interviewer_can_submit_their_rating():
     principal = make_user(AppRole.principal)
     opening = make_opening(principal)

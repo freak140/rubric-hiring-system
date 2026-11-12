@@ -1,0 +1,140 @@
+{% extends "base.html" %}
+{% block title %}My dashboard · Rubric{% endblock %}
+{% block content %}
+<h1 class="text-2xl font-bold tracking-tight mb-1">My dashboard</h1>
+<p class="text-sm text-gray-500 mb-8">Everything happening across the openings you manage, without clicking into each candidate.</p>
+
+<section class="mb-10">
+  <h2 class="text-lg font-semibold mb-3">
+    Needs your attention
+    <span class="text-sm font-normal text-gray-400">({{ needs_attention | length }})</span>
+  </h2>
+  {% if needs_attention %}
+  <div class="bg-white border border-gray-200 rounded-lg shadow-sm divide-y">
+    {% for row in needs_attention %}
+    <a href="/applications/{{ row.application.id }}" class="block px-4 py-3 hover:bg-amber-50">
+      <div class="flex items-center justify-between gap-3">
+        <p class="text-sm font-medium">{{ row.application.candidate.full_name }} &middot; {{ row.opening.title }}</p>
+        <span class="shrink-0 text-xs font-medium text-amber-700 bg-amber-100 px-2 py-1 rounded-full">
+          Blocked before {{ row.next_stage.value | replace('_', ' ') | title }}
+        </span>
+      </div>
+      <ul class="text-sm text-gray-600 list-disc list-inside mt-1">
+        {% for reason in row.reasons %}
+        <li>{{ reason }}</li>
+        {% endfor %}
+      </ul>
+    </a>
+    {% endfor %}
+  </div>
+  {% else %}
+  <p class="text-sm text-gray-400">Nothing blocked right now.</p>
+  {% endif %}
+</section>
+
+<section class="mb-10">
+  <h2 class="text-lg font-semibold mb-3">
+    Interviews
+    <span class="text-sm font-normal text-gray-400">({{ interview_rows | length }})</span>
+  </h2>
+  <div class="overflow-x-auto bg-white border border-gray-200 rounded-lg shadow-sm">
+    <table class="min-w-full text-sm">
+      <thead class="bg-gray-50">
+        <tr>
+          <th class="text-left px-3 py-2">Candidate</th>
+          <th class="text-left px-3 py-2">Opening</th>
+          <th class="text-left px-3 py-2">Type</th>
+          <th class="text-left px-3 py-2">Interviewer</th>
+          <th class="text-left px-3 py-2">Status</th>
+          <th class="text-left px-3 py-2">Action</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for row in interview_rows %}
+        {% set interview = row.interview %}
+        <tr class="border-t border-gray-100">
+          <td class="px-3 py-2">
+            <a href="/applications/{{ row.application.id }}" class="text-indigo-700 hover:underline">{{ row.application.candidate.full_name }}</a>
+          </td>
+          <td class="px-3 py-2 text-gray-600">{{ row.opening.title }}</td>
+          <td class="px-3 py-2 text-gray-600">{{ interview.interview_type.value | replace('_', ' ') | title }}</td>
+          <td class="px-3 py-2 text-gray-600">{{ interview.interviewer.name }}</td>
+          <td class="px-3 py-2">
+            <span class="text-xs font-medium px-2 py-1 rounded-full
+              {% if interview.status.value == 'completed' %}bg-green-100 text-green-800
+              {% elif interview.status.value == 'released' %}bg-gray-100 text-gray-600
+              {% else %}bg-amber-100 text-amber-800{% endif %}">
+              {{ interview.status.value | title }}
+            </span>
+          </td>
+          <td class="px-3 py-2">
+            {% if interview.status.value == "assigned" %}
+            <form method="post" action="/interviews/{{ interview.id }}/release" class="flex items-center gap-1.5"
+                  onsubmit="return confirm('Release {{ interview.interviewer.name }} from this interview?');">
+              <input name="reason" required placeholder="Reason to release" class="border border-gray-300 rounded px-2 py-1 text-xs w-36">
+              <button class="text-xs bg-gray-600 text-white px-2 py-1 rounded whitespace-nowrap">Release</button>
+            </form>
+            {% elif interview.status.value == "released" %}
+            <span class="text-xs text-gray-500">{{ interview.release_reason }}</span>
+            {% else %}
+            <a href="/interviews/{{ interview.id }}" class="text-xs text-indigo-700 hover:underline">View</a>
+            {% endif %}
+          </td>
+        </tr>
+        {% else %}
+        <tr><td colspan="6" class="px-3 py-3 text-gray-400">No interviews yet.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<section class="mb-10">
+  <h2 class="text-lg font-semibold mb-3">My openings</h2>
+  <div class="overflow-x-auto bg-white border border-gray-200 rounded-lg shadow-sm">
+    <table class="min-w-full text-sm">
+      <thead class="bg-gray-50">
+        <tr>
+          <th class="text-left px-3 py-2">Opening</th>
+          <th class="text-left px-3 py-2">Status</th>
+          <th class="text-left px-3 py-2">Total</th>
+          <th class="text-left px-3 py-2">By stage</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for row in opening_rows %}
+        <tr class="border-t border-gray-100">
+          <td class="px-3 py-2"><a href="/openings/{{ row.opening.id }}" class="text-indigo-700 hover:underline">{{ row.opening.title }}</a></td>
+          <td class="px-3 py-2">{{ row.opening.status.value | title }}</td>
+          <td class="px-3 py-2">{{ row.total }}</td>
+          <td class="px-3 py-2 text-gray-600">
+            {% for stage, count in row.stage_counts.items() %}
+            <span class="inline-block mr-2">{{ stage | replace('_', ' ') | title }}: {{ count }}</span>
+            {% else %}
+            <span class="text-gray-400">No candidates yet</span>
+            {% endfor %}
+          </td>
+        </tr>
+        {% else %}
+        <tr><td colspan="4" class="px-3 py-3 text-gray-400">You don't manage any openings yet.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<section>
+  <h2 class="text-lg font-semibold mb-3">Recent activity</h2>
+  <div class="bg-white border border-gray-200 rounded-lg shadow-sm divide-y">
+    {% for row in recent_activity %}
+    {% set tag = "a" if row.url else "div" %}
+    <{{ tag }} {% if row.url %}href="{{ row.url }}"{% endif %} class="flex items-center justify-between gap-3 px-4 py-2.5 text-sm {% if row.url %}hover:bg-gray-50{% endif %}">
+      <span class="text-gray-700">{{ row.description }}</span>
+      <span class="shrink-0 text-xs text-gray-400">{{ row.event.created_at.strftime('%d %b, %H:%M') }}</span>
+    </{{ tag }}>
+    {% else %}
+    <p class="px-4 py-3 text-sm text-gray-400">No activity yet.</p>
+    {% endfor %}
+  </div>
+</section>
+{% endblock %}

@@ -66,6 +66,12 @@ def can_view_dashboard(user: User) -> bool:
     return user.app_role == AppRole.chairman
 
 
+def can_view_principal_dashboard(user: User) -> bool:
+    """A principal's own openings-and-activity view, distinct from the
+    chairman's org-wide dashboard (which also sees overrides and the audit log)."""
+    return user.app_role == AppRole.principal
+
+
 def can_view_audit_log(user: User) -> bool:
     return user.app_role == AppRole.chairman
 

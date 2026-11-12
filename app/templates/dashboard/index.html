@@ -1,22 +1,90 @@
 {% extends "base.html" %}
 {% block title %}Dashboard · Rubric{% endblock %}
 {% block content %}
-<h1 class="text-2xl font-bold mb-6">Chairman dashboard</h1>
+<h1 class="text-2xl font-bold tracking-tight mb-6">Chairman dashboard</h1>
 
 <div class="grid grid-cols-2 sm:grid-cols-2 gap-4 mb-10">
-  <div class="bg-white border border-gray-200 rounded-md p-4">
-    <p class="text-xs text-gray-500 uppercase">Hires to date</p>
-    <p class="text-3xl font-bold">{{ hires_to_date }}</p>
+  <div class="bg-white border-l-4 border-indigo-500 border-y border-r border-gray-200 rounded-lg shadow-sm p-4">
+    <p class="text-xs text-gray-500 uppercase tracking-wide">Hires to date</p>
+    <p class="text-3xl font-bold text-gray-900">{{ hires_to_date }}</p>
   </div>
-  <div class="bg-white border border-gray-200 rounded-md p-4">
-    <p class="text-xs text-gray-500 uppercase">Avg days, opening to hire</p>
-    <p class="text-3xl font-bold">{{ avg_days_to_hire if avg_days_to_hire is not none else "—" }}</p>
+  <div class="bg-white border-l-4 border-green-500 border-y border-r border-gray-200 rounded-lg shadow-sm p-4">
+    <p class="text-xs text-gray-500 uppercase tracking-wide">Avg days, opening to hire</p>
+    <p class="text-3xl font-bold text-gray-900">{{ avg_days_to_hire if avg_days_to_hire is not none else "—" }}</p>
   </div>
 </div>
 
 <section class="mb-10">
+  <h2 class="text-lg font-semibold mb-3">
+    Recent hires
+    <span class="text-sm font-normal text-gray-400">({{ recent_hires | length }})</span>
+  </h2>
+  <div class="overflow-x-auto bg-white border border-gray-200 rounded-lg shadow-sm">
+    <table class="min-w-full text-sm">
+      <thead class="bg-gray-50">
+        <tr>
+          <th class="text-left px-3 py-2">Candidate</th>
+          <th class="text-left px-3 py-2">Opening</th>
+          <th class="text-left px-3 py-2">Hired on</th>
+          <th class="text-left px-3 py-2">Decided by</th>
+          <th class="text-left px-3 py-2"></th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for row in recent_hires %}
+        <tr class="border-t border-gray-100">
+          <td class="px-3 py-2"><a href="/applications/{{ row.application.id }}" class="text-indigo-700 hover:underline">{{ row.application.candidate.full_name }}</a></td>
+          <td class="px-3 py-2 text-gray-600">{{ row.application.opening.title }}</td>
+          <td class="px-3 py-2 text-gray-600">{{ row.hired_at.strftime('%d %b %Y') if row.hired_at else "—" }}</td>
+          <td class="px-3 py-2 text-gray-600">{{ row.application.decision.decided_by.name if row.application.decision else "—" }}</td>
+          <td class="px-3 py-2"><a href="/applications/{{ row.application.id }}/record" class="text-indigo-700 hover:underline">Decision record</a></td>
+        </tr>
+        {% else %}
+        <tr><td colspan="5" class="px-3 py-3 text-gray-400">No hires yet.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<section class="mb-10">
+  <h2 class="text-lg font-semibold mb-3">
+    In-progress hiring
+    <span class="text-sm font-normal text-gray-400">({{ in_progress_rows | length }})</span>
+  </h2>
+  <div class="overflow-x-auto bg-white border border-gray-200 rounded-lg shadow-sm">
+    <table class="min-w-full text-sm">
+      <thead class="bg-gray-50">
+        <tr>
+          <th class="text-left px-3 py-2">Candidate</th>
+          <th class="text-left px-3 py-2">Opening</th>
+          <th class="text-left px-3 py-2">Stage</th>
+          <th class="text-left px-3 py-2">Last activity</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for row in in_progress_rows %}
+        <tr class="border-t border-gray-100">
+          <td class="px-3 py-2"><a href="/applications/{{ row.application.id }}" class="text-indigo-700 hover:underline">{{ row.application.candidate.full_name }}</a></td>
+          <td class="px-3 py-2 text-gray-600">{{ row.application.opening.title }}</td>
+          <td class="px-3 py-2">
+            <span class="text-xs font-medium px-2 py-1 rounded-full bg-indigo-50 text-indigo-800">
+              {{ row.application.stage.value | replace('_', ' ') | title }}
+            </span>
+          </td>
+          <td class="px-3 py-2 text-gray-600">{{ row.last_activity.strftime('%d %b %Y') }}</td>
+        </tr>
+        {% else %}
+        <tr><td colspan="4" class="px-3 py-3 text-gray-400">Nothing in progress right now.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<section class="mb-10">
   <h2 class="text-lg font-semibold mb-3">Openings</h2>
-  <div class="overflow-x-auto bg-white border border-gray-200 rounded-md">
+  <div class="overflow-x-auto bg-white border border-gray-200 rounded-lg shadow-sm">
     <table class="min-w-full text-sm">
       <thead class="bg-gray-50">
         <tr>
@@ -28,7 +96,7 @@
       <tbody>
         {% for row in opening_rows %}
         <tr class="border-t border-gray-100">
-          <td class="px-3 py-2"><a href="/openings/{{ row.opening.id }}" class="text-blue-700 hover:underline">{{ row.opening.title }}</a></td>
+          <td class="px-3 py-2"><a href="/openings/{{ row.opening.id }}" class="text-indigo-700 hover:underline">{{ row.opening.title }}</a></td>
           <td class="px-3 py-2">{{ row.total }}</td>
           <td class="px-3 py-2 text-gray-600">
             {% for stage, count in row.stage_counts.items() %}
@@ -44,7 +112,7 @@
 
 <section class="mb-10">
   <h2 class="text-lg font-semibold mb-3">Overrides</h2>
-  <div class="overflow-x-auto bg-white border border-gray-200 rounded-md">
+  <div class="overflow-x-auto bg-white border border-gray-200 rounded-lg shadow-sm">
     <table class="min-w-full text-sm">
       <thead class="bg-gray-50">
         <tr>
@@ -78,7 +146,7 @@
 
 <section class="mb-10">
   <h2 class="text-lg font-semibold mb-3">Released interviewers</h2>
-  <div class="overflow-x-auto bg-white border border-gray-200 rounded-md">
+  <div class="overflow-x-auto bg-white border border-gray-200 rounded-lg shadow-sm">
     <table class="min-w-full text-sm">
       <thead class="bg-gray-50">
         <tr>
@@ -91,7 +159,7 @@
       <tbody>
         {% for interview in released_interviews %}
         <tr class="border-t border-gray-100">
-          <td class="px-3 py-2"><a href="/applications/{{ interview.application_id }}" class="text-blue-700 hover:underline">{{ interview.application.candidate.full_name }}</a></td>
+          <td class="px-3 py-2"><a href="/applications/{{ interview.application_id }}" class="text-indigo-700 hover:underline">{{ interview.application.candidate.full_name }}</a></td>
           <td class="px-3 py-2">{{ interview.interviewer.name }}</td>
           <td class="px-3 py-2">{{ interview.interview_type.value | replace('_', ' ') | title }}</td>
           <td class="px-3 py-2 text-gray-600">{{ interview.release_reason }}</td>
@@ -106,7 +174,7 @@
 
 <section class="mb-10">
   <h2 class="text-lg font-semibold mb-3">No activity for {{ stale_after_days }}+ days</h2>
-  <div class="overflow-x-auto bg-white border border-gray-200 rounded-md">
+  <div class="overflow-x-auto bg-white border border-gray-200 rounded-lg shadow-sm">
     <table class="min-w-full text-sm">
       <thead class="bg-gray-50">
         <tr>
@@ -119,7 +187,7 @@
       <tbody>
         {% for row in stale_applications %}
         <tr class="border-t border-gray-100">
-          <td class="px-3 py-2"><a href="/applications/{{ row.application.id }}" class="text-blue-700 hover:underline">{{ row.application.candidate.full_name }}</a></td>
+          <td class="px-3 py-2"><a href="/applications/{{ row.application.id }}" class="text-indigo-700 hover:underline">{{ row.application.candidate.full_name }}</a></td>
           <td class="px-3 py-2">{{ row.application.opening.title }}</td>
           <td class="px-3 py-2">{{ row.application.stage.value | replace('_', ' ') | title }}</td>
           <td class="px-3 py-2 text-gray-600">{{ row.last_activity.strftime('%d %b %Y') }}</td>
