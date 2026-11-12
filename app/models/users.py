@@ -12,6 +12,9 @@ class User(TimestampMixin, Base):
     name: Mapped[str] = mapped_column(String(200))
     email: Mapped[str] = mapped_column(String(320), unique=True)
     app_role: Mapped[AppRole] = mapped_column(str_enum(AppRole))
+    # Null until the user sets a password. Demo mode (the role switcher) never
+    # needs this; normal mode (real login) requires it.
+    password_hash: Mapped[str | None] = mapped_column(String(200))
 
     openings_managed: Mapped[list["RoleOpening"]] = relationship(back_populates="hiring_manager")
     scorecards_approved: Mapped[list["Scorecard"]] = relationship(back_populates="approved_by")

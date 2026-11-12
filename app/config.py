@@ -6,6 +6,10 @@ class Settings(BaseSettings):
 
     DATABASE_URL: str = "postgresql+psycopg://postgres:postgres@localhost:5432/rubric"
 
+    # Signs the real-login session cookie. Change this to a long random value
+    # in any deployment -- the default below is only for local development.
+    SECRET_KEY: str = "dev-only-secret-change-me"
+
     # AI is off by default; the app must be fully usable without it.
     AI_ENABLED: bool = False
     GROQ_API_KEY: str | None = None

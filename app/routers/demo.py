@@ -1,14 +1,28 @@
 from fastapi import APIRouter, Depends, Form, HTTPException, Request
 from fastapi.responses import RedirectResponse
 from fastapi.templating import Jinja2Templates
+from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.db import get_db
 from app.dependencies import CURRENT_USER_COOKIE, get_template_context, set_flash
+from app.models.enums import AppRole
+from app.models.users import User
 from app.services import permissions
 
 router = APIRouter(prefix="/demo", tags=["demo"])
 templates = Jinja2Templates(directory="app/templates")
+
+
+@router.post("/enter")
+def enter_demo_mode(db: Session = Depends(get_db)):
+    """The landing page's "Continue in demo mode" choice: starts as the chairman,
+    same as the switcher's own default, just with an explicit first click."""
+    chairman = db.scalar(select(User).where(User.app_role == AppRole.chairman).order_by(User.id))
+    response = RedirectResponse(url="/", status_code=303)
+    if chairman is not None:
+        response.set_cookie(CURRENT_USER_COOKIE, str(chairman.id), httponly=True, samesite="lax")
+    return response
 
 
 @router.post("/switch-user")
